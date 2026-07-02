@@ -1,0 +1,19 @@
+﻿<?xml version='1.0'?>
+<Obfuscator>
+	<Var name="InPath" value="." />
+	<Var name="OutPath" value=".\Obfuscated" />
+
+	<AssemblySearchPath path="C:\Program Files\dotnet\shared\Microsoft.WindowsDesktop.App\8.0.23" />
+	<AssemblySearchPath path="C:\Program Files\dotnet\shared\Microsoft.NETCore.App\8.0.23" />
+	<AssemblySearchPath path="." />
+
+	<Var name="KeepPublicApi" value="true" />
+	<Var name="HidePrivateApi" value="true" />
+	<Var name="RenameProperties" value="true" />
+	<Var name="RenameEvents" value="true" />
+	<Var name="RenameFields" value="true" />
+	<Var name="EncryptStrings" value="true" />
+	<Var name="SuppressIldasm" value="true" />
+
+	<Module file="$(InPath)\EVO CRAFT LAUNCHER.dll" />
+</Obfuscator>

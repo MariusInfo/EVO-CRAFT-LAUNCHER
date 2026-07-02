@@ -16,6 +16,7 @@
 
         <Storyboard x:Key="RamWarningAnim">
             <ColorAnimation Storyboard.TargetName="MainContainer" Storyboard.TargetProperty="(Border.BorderBrush).(SolidColorBrush.Color)" To="Red" Duration="0:0:0.4" AutoReverse="True" RepeatBehavior="2x"/>
+            <ColorAnimation Storyboard.TargetName="brdNewsPopOut" Storyboard.TargetProperty="(Border.BorderBrush).(SolidColorBrush.Color)" To="Red" Duration="0:0:0.4" AutoReverse="True" RepeatBehavior="2x"/>
             <ColorAnimation Storyboard.TargetName="brdRegister" Storyboard.TargetProperty="(Border.BorderBrush).(SolidColorBrush.Color)" To="Red" Duration="0:0:0.4" AutoReverse="True" RepeatBehavior="2x"/>
         </Storyboard>
 
@@ -111,40 +112,9 @@
                 <MediaElement x:Name="bgVideo" Source="background.mp4" LoadedBehavior="Manual" Stretch="UniformToFill" IsMuted="True" MediaEnded="bgVideo_MediaEnded" Loaded="bgVideo_Loaded"/>
                 <Rectangle Fill="Black" Opacity="0.55"/>
 
-                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top" Panel.ZIndex="100" Margin="0,10,10,0">
-
-                    <Button Width="50" Height="32" Click="btnLangRO_Click" Background="Transparent" BorderThickness="0" Cursor="Hand" ToolTip="Română">
-                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                            <Grid Width="18" Height="12" Margin="0,0,5,0">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="*"/>
-                                </Grid.ColumnDefinitions>
-                                <Rectangle Fill="#002B7F" Grid.Column="0"/>
-                                <Rectangle Fill="#FCD116" Grid.Column="1"/>
-                                <Rectangle Fill="#CE1126" Grid.Column="2"/>
-                            </Grid>
-                            <TextBlock Text="RO" Foreground="White" FontSize="13" FontWeight="Bold" VerticalAlignment="Center"/>
-                        </StackPanel>
-                    </Button>
-
-                    <Button Width="50" Height="32" Click="btnLangEN_Click" Background="Transparent" BorderThickness="0" Cursor="Hand" ToolTip="English" Margin="0,0,10,0">
-                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                            <Grid Width="18" Height="12" Background="#012169" Margin="0,0,5,0">
-                                <Path Data="M 0,0 L 18,12 M 18,0 L 0,12" Stroke="White" StrokeThickness="2"/>
-                                <Path Data="M 0,0 L 18,12 M 18,0 L 0,12" Stroke="#C8102E" StrokeThickness="1"/>
-                                <Rectangle Fill="White" Width="4" Height="12" HorizontalAlignment="Center"/>
-                                <Rectangle Fill="White" Width="18" Height="4" VerticalAlignment="Center"/>
-                                <Rectangle Fill="#C8102E" Width="2" Height="12" HorizontalAlignment="Center"/>
-                                <Rectangle Fill="#C8102E" Width="18" Height="2" VerticalAlignment="Center"/>
-                            </Grid>
-                            <TextBlock Text="EN" Foreground="White" FontSize="13" FontWeight="Bold" VerticalAlignment="Center"/>
-                        </StackPanel>
-                    </Button>
-
-                    <Button Width="45" Height="32" Content="—" Click="btnMinimize_Click" Background="Transparent" Foreground="White" BorderThickness="0" Cursor="Hand"/>
-                    <Button Width="45" Height="32" Content="✕" Click="btnClose_Click" Background="Transparent" Foreground="White" BorderThickness="0" Cursor="Hand"/>
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top" Panel.ZIndex="100">
+                    <Button Width="45" Height="32" Content="—" Click="btnMinimize_Click" Background="Transparent" Foreground="White" BorderThickness="0"/>
+                    <Button Width="45" Height="32" Content="✕" Click="btnClose_Click" Background="Transparent" Foreground="White" BorderThickness="0"/>
                 </StackPanel>
 
                 <Grid Margin="40">
@@ -157,14 +127,21 @@
                     <Grid Grid.Row="0">
                         <StackPanel HorizontalAlignment="Left">
                             <TextBlock Text="EVO CRAFT" FontSize="40" FontWeight="Black" Foreground="White"/>
-                            <TextBlock x:Name="lblLauncherTitleSub" Text="LAUNCHER OFICIAL" FontSize="12" Foreground="#43b581" FontWeight="Bold"/>
+                            <TextBlock Text="LAUNCHER OFICIAL" FontSize="12" Foreground="#43b581" FontWeight="Bold"/>
                         </StackPanel>
+                        <Border HorizontalAlignment="Right" Background="#AA000000" CornerRadius="12" Padding="15,8" VerticalAlignment="Center">
+                            <StackPanel Orientation="Horizontal">
+                                <Ellipse x:Name="elServerStatus" Width="10" Height="10" Fill="Gray" Margin="0,0,10,0" VerticalAlignment="Center"/>
+                                <TextBlock x:Name="lblServerInfo" Text="VERIFICARE..." Foreground="White" VerticalAlignment="Center" FontWeight="Bold" FontSize="11" TextTrimming="CharacterEllipsis"/>
+                                <Button x:Name="btnRefreshServer" Content="↻" Click="btnRefreshServer_Click" Background="Transparent" Foreground="White" BorderThickness="0" Margin="10,0,0,0" Cursor="Hand" FontSize="18"/>
+                            </StackPanel>
+                        </Border>
                     </Grid>
 
                     <Grid Grid.Row="1">
                         <Border HorizontalAlignment="Left" VerticalAlignment="Top" Width="220" Margin="0,20,0,0" Background="#99000000" CornerRadius="15" Padding="15" BorderBrush="#33FFFFFF" BorderThickness="1">
                             <StackPanel>
-                                <TextBlock x:Name="lblTopPlaytimeTitle" Text="🏆 TOP PLAYTIME" Foreground="#43b581" FontWeight="Black" FontSize="14" Margin="0,0,0,10" HorizontalAlignment="Center"/>
+                                <TextBlock Text="🏆 TOP PLAYTIME" Foreground="#43b581" FontWeight="Black" FontSize="14" Margin="0,0,0,10" HorizontalAlignment="Center"/>
                                 <ItemsControl x:Name="lstTopPlayed">
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate>
@@ -183,9 +160,9 @@
                         </Border>
 
                         <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Width="400">
-                            <Border Background="#CC121212" CornerRadius="50" Padding="30" BorderBrush="#22FFFFFF" BorderThickness="1">
+                            <Border Background="#CC121212" CornerRadius="20" Padding="30" BorderBrush="#22FFFFFF" BorderThickness="1">
                                 <StackPanel>
-                                    <Border Background="#1AFFFFFF" CornerRadius="20" Padding="4" Margin="0,0,0,25">
+                                    <Border Background="#1AFFFFFF" CornerRadius="15" Padding="4" Margin="0,0,0,25">
                                         <Grid>
                                             <Grid.ColumnDefinitions>
                                                 <ColumnDefinition Width="*"/>
@@ -197,11 +174,11 @@
                                     </Border>
 
                                     <StackPanel x:Name="pnlUsernameInput">
-                                        <TextBlock x:Name="lblUsernameTitle" Text="NUME UTILIZATOR" Foreground="Gray" FontSize="10" FontWeight="Bold" Margin="0,0,0,8"/>
+                                        <TextBlock Text="NUME UTILIZATOR" Foreground="Gray" FontSize="10" FontWeight="Bold" Margin="0,0,0,8"/>
                                         <TextBox x:Name="txtUsername" Height="40" Background="#44000000" Foreground="White" VerticalContentAlignment="Center" Padding="12,0" FontSize="14" BorderBrush="#33FFFFFF" TextChanged="txtUsername_TextChanged" Margin="0,0,0,10"/>
-                                        <TextBlock x:Name="lblPasswordTitle" Text="PAROLĂ" Foreground="Gray" FontSize="10" FontWeight="Bold" Margin="0,0,0,8"/>
+                                        <TextBlock Text="PAROLĂ" Foreground="Gray" FontSize="10" FontWeight="Bold" Margin="0,0,0,8"/>
                                         <PasswordBox x:Name="txtPassword" Height="40" Background="#44000000" Foreground="White" VerticalContentAlignment="Center" Padding="12,0" FontSize="14" BorderBrush="#33FFFFFF"/>
-                                        <Button x:Name="btnOpenRegister" Content="Nu ai cont? Înregistrează-te aici" Click="btnOpenRegister_Click" Background="Transparent" Foreground="Gray" BorderThickness="0" FontSize="11" Cursor="Hand" Margin="0,5,0,0"/>
+                                        <Button Content="Nu ai cont? Înregistrează-te aici" Click="btnOpenRegister_Click" Background="Transparent" Foreground="Gray" BorderThickness="0" FontSize="11" Cursor="Hand" Margin="0,5,0,0"/>
                                     </StackPanel>
 
                                     <StackPanel x:Name="pnlDbLoggedInMsg" Visibility="Collapsed" Height="100" VerticalAlignment="Center">
@@ -216,7 +193,7 @@
                                         <Button Content="Deconectare Microsoft" Click="btnLogout_Click" Background="Transparent" Foreground="Gray" BorderThickness="0" FontSize="11" Cursor="Hand" Margin="0,15,0,0"/>
                                     </StackPanel>
 
-                                    <Button x:Name="btnLaunch" Content="JOACĂ" Click="btnLaunch_Click" Height="55" Margin="0,15,0,0" Style="{StaticResource LaunchButtonStyle}"/>
+                                    <Button x:Name="btnLaunch" Content="JOACĂ" Click="btnLaunch_Click" Height="65" Margin="0,15,0,0" Style="{StaticResource LaunchButtonStyle}"/>
 
                                     <Grid Margin="0,20,0,0">
                                         <StackPanel>
@@ -229,37 +206,22 @@
                             </Border>
                         </StackPanel>
 
-                        <StackPanel HorizontalAlignment="Right" VerticalAlignment="Center" Width="210">
+                        <Border HorizontalAlignment="Right" VerticalAlignment="Center" Width="200" Background="#CC121212" CornerRadius="20" Padding="15" BorderBrush="#22FFFFFF" BorderThickness="1">
+                            <StackPanel>
+                                <TextBlock Text="🎮 MOD DE JOC" Foreground="#43b581" FontWeight="Black" FontSize="13" Margin="0,0,0,15" HorizontalAlignment="Center"/>
 
-                            <Border Background="#AA000000" CornerRadius="15" Padding="12,8" Margin="0,0,0,15" BorderBrush="#33FFFFFF" BorderThickness="1">
-                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                                    <Ellipse x:Name="elServerStatus" Width="8" Height="8" Fill="Gray" Margin="0,0,8,0" VerticalAlignment="Center"/>
-                                    <TextBlock x:Name="lblServerInfo" Text="VERIFICARE..." Foreground="White" VerticalAlignment="Center" FontWeight="Bold" FontSize="10" TextTrimming="CharacterEllipsis" MaxWidth="150"/>
-                                    <Button x:Name="btnRefreshServer" Content="↻" Click="btnRefreshServer_Click" Background="Transparent" Foreground="White" BorderThickness="0" Margin="5,0,0,0" Cursor="Hand" FontSize="16"/>
-                                </StackPanel>
-                            </Border>
+                                <Button x:Name="btnModeSurvival" Content="SURVIVAL" Click="btnModeSurvival_Click" Style="{StaticResource TabButtonStyle}" Height="38" Margin="0,5"/>
+                                <Button x:Name="btnModeSkyblock" Content="SKYBLOCK" Click="btnModeSkyblock_Click" Style="{StaticResource TabButtonStyle}" Height="38" Margin="0,5"/>
+                                <Button x:Name="btnModeCreative" Content="CREATIVE" Click="btnModeCreative_Click" Style="{StaticResource TabButtonStyle}" Height="38" Margin="0,5"/>
+                                <Button x:Name="btnModeParkour" Content="PARKOUR" Click="btnModeParkour_Click" Style="{StaticResource TabButtonStyle}" Height="38" Margin="0,5"/>
 
-                            <Border Background="#CC121212" CornerRadius="20" Padding="15" BorderBrush="#22FFFFFF" BorderThickness="1">
-                                <StackPanel>
-                                    <StackPanel Margin="22,10,0,0">
-                                        <TextBlock x:Name="lblPersonalIdTitle" Text="ID PERSONAL / REFERRAL" Foreground="Gray" FontSize="10" FontWeight="Bold" Margin="0,0,0,5" HorizontalAlignment="Left"/>
-                                        <TextBox x:Name="txtPersonalId" Text="-" IsReadOnly="True" FontSize="18" FontWeight="Bold" Background="#1A1A1A" Foreground="#43b581" BorderBrush="#333" BorderThickness="1" VerticalContentAlignment="Center" TextAlignment="Center" Width="122" Height="30" HorizontalAlignment="Left"/>
-                                    </StackPanel>
-
-                                    <TextBlock x:Name="lblGameModeTitle" Text="🎮 MOD DE JOC" Foreground="#43b581" FontWeight="Black" FontSize="13" Margin="0,15,0,5" HorizontalAlignment="Center"/>
-
-                                    <Button x:Name="btnModeSurvival" Content="SURVIVAL &amp; CREATIVE" Click="btnModeSurvival_Click" Style="{StaticResource TabButtonStyle}" Height="38" Margin="0,5"/>
-                                    <Button x:Name="btnModeSkyblock" Content="SKYBLOCK" Click="btnModeSkyblock_Click" Style="{StaticResource TabButtonStyle}" Height="38" Margin="0,5"/>
-                                    <Button x:Name="btnModeParkour" Content="PARKOUR" Click="btnModeParkour_Click" Style="{StaticResource TabButtonStyle}" Height="38" Margin="0,5"/>
-
-                                    <Rectangle Height="1" Fill="#33FFFFFF" Margin="0,4"/>
-                                    <Button x:Name="tgVoiceChat" Content="🎤 VOICE CHAT: OFF" Click="tgVoiceChat_Click" Style="{StaticResource TabButtonStyle}" Height="38" Margin="0,5" Background="#333333" Foreground="Gray"/>
-                                </StackPanel>
-                            </Border>
-                        </StackPanel>
+                                <Rectangle Height="1" Fill="#33FFFFFF" Margin="0,10"/>
+                                <Button x:Name="tgVoiceChat" Content="🎤 VOICE CHAT: OFF" Click="tgVoiceChat_Click" Style="{StaticResource TabButtonStyle}" Height="38" Margin="0,5" Background="#333333" Foreground="Gray"/>
+                            </StackPanel>
+                        </Border>
                     </Grid>
 
-                    <Grid Grid.Row="2" VerticalAlignment="Bottom" Margin="0,0,0,-10">
+                    <Grid Grid.Row="2" VerticalAlignment="Bottom" Margin="0,0,0,10">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="1*"/>
                             <ColumnDefinition Width="Auto"/>
@@ -287,7 +249,7 @@
                         </StackPanel>
 
                         <StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
-                            <Button Click="BtnSettings_Click" Foreground="White" Background="#22FFFFFF" Width="42" Height="42" Margin="0,0,12,0" Content="⚙"/>
+                            <Button Click="btnSettings_Click" Foreground="White" Background="#22FFFFFF" Width="42" Height="42" Margin="0,0,12,0" Content="⚙"/>
                             <StackPanel VerticalAlignment="Center" Margin="0,0,12,0">
                                 <TextBlock x:Name="lblProfileName" Foreground="White" FontWeight="Bold" FontSize="13" HorizontalAlignment="Right"/>
                                 <TextBlock x:Name="lblAccountType" Foreground="#43b581" FontSize="10" HorizontalAlignment="Right"/>
@@ -301,68 +263,25 @@
                     </Grid>
                 </Grid>
 
-                <Grid x:Name="pnlLanguageSelect" Visibility="Collapsed" Panel.ZIndex="3000" Background="#E6000000">
-                    <Border Background="#1A1A1A" Width="450" Height="250" CornerRadius="20" BorderBrush="#43b581" BorderThickness="1.5" VerticalAlignment="Center">
-                        <StackPanel VerticalAlignment="Center" Margin="20">
-                            <TextBlock Text="Welcome! / Bun venit!" Foreground="White" FontSize="22" FontWeight="Bold" TextAlignment="Center" Margin="0,0,0,10"/>
-                            <TextBlock Text="Please select your language.&#x0a;Te rugăm să selectezi limba." Foreground="Gray" FontSize="14" TextAlignment="Center" Margin="0,0,0,30"/>
-
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="*"/>
-                                </Grid.ColumnDefinitions>
-
-                                <Button Grid.Column="0" Click="btnFirstRunRO_Click" Style="{StaticResource LaunchButtonStyle}" Height="50" Margin="10" Padding="10,0">
-                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
-                                        <Grid Width="24" Height="16" Margin="0,0,10,0" VerticalAlignment="Center">
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="*"/>
-                                                <ColumnDefinition Width="*"/>
-                                                <ColumnDefinition Width="*"/>
-                                            </Grid.ColumnDefinitions>
-                                            <Rectangle Fill="#002B7F" Grid.Column="0"/>
-                                            <Rectangle Fill="#FCD116" Grid.Column="1"/>
-                                            <Rectangle Fill="#CE1126" Grid.Column="2"/>
-                                        </Grid>
-                                        <TextBlock Text="Română" FontSize="16" Foreground="White" FontWeight="Bold" VerticalAlignment="Center"/>
-                                    </StackPanel>
-                                </Button>
-
-                                <Button Grid.Column="1" Click="btnFirstRunEN_Click" Style="{StaticResource LaunchButtonStyle}" Height="50" Margin="10" Padding="10,0">
-                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
-                                        <Grid Width="24" Height="16" Background="#012169" Margin="0,0,10,0" VerticalAlignment="Center">
-                                            <Path Data="M 0,0 L 24,16 M 24,0 L 0,16" Stroke="White" StrokeThickness="2.5"/>
-                                            <Path Data="M 0,0 L 24,16 M 24,0 L 0,16" Stroke="#C8102E" StrokeThickness="1.5"/>
-                                            <Rectangle Fill="White" Width="6" Height="16" HorizontalAlignment="Center"/>
-                                            <Rectangle Fill="White" Width="24" Height="4" VerticalAlignment="Center"/>
-                                            <Rectangle Fill="#C8102E" Width="3" Height="16" HorizontalAlignment="Center"/>
-                                            <Rectangle Fill="#C8102E" Width="24" Height="2" VerticalAlignment="Center"/>
-                                        </Grid>
-                                        <TextBlock Text="English" FontSize="16" Foreground="White" FontWeight="Bold" VerticalAlignment="Center"/>
-                                    </StackPanel>
-                                </Button>
-                            </Grid>
-                        </StackPanel>
-                    </Border>
-                </Grid>
-
                 <Grid x:Name="pnlRegister" Visibility="Collapsed" Panel.ZIndex="600">
                     <Rectangle Fill="Black" Opacity="0.85"/>
-                    <Border x:Name="brdRegister" Background="#1A1A1A" Width="450" Height="480" CornerRadius="25" BorderBrush="#43b581" BorderThickness="1.5" VerticalAlignment="Center">
+                    <Border x:Name="brdRegister" Background="#1A1A1A" Width="450" Height="550" CornerRadius="25" BorderBrush="#43b581" BorderThickness="1.5" VerticalAlignment="Center">
                         <StackPanel Margin="30">
                             <Grid Margin="0,0,0,20">
-                                <TextBlock x:Name="lblRegisterTitle" Text="CREARE CONT NOU" Foreground="White" FontSize="22" FontWeight="Bold"/>
+                                <TextBlock Text="CREARE CONT NOU" Foreground="White" FontSize="22" FontWeight="Bold"/>
                                 <Button Content="✕" Click="btnCloseRegister_Click" HorizontalAlignment="Right" Background="Transparent" Foreground="Gray" BorderThickness="0" FontSize="20" Cursor="Hand"/>
                             </Grid>
 
-                            <TextBlock x:Name="lblRegUsernameTitle" Text="NUME UTILIZATOR" Foreground="Gray" FontSize="10" FontWeight="Bold" Margin="0,5,0,8"/>
+                            <TextBlock Text="NUME UTILIZATOR" Foreground="Gray" FontSize="10" FontWeight="Bold" Margin="0,5,0,8"/>
                             <TextBox x:Name="regUsername" Height="40" Background="#0A0A0A" Foreground="White" VerticalContentAlignment="Center" Padding="12,0" FontSize="14" BorderBrush="#333"/>
 
-                            <TextBlock x:Name="lblRegPasswordTitle" Text="PAROLĂ" Foreground="Gray" FontSize="10" FontWeight="Bold" Margin="0,15,0,8"/>
+                            <TextBlock Text="PAROLĂ" Foreground="Gray" FontSize="10" FontWeight="Bold" Margin="0,15,0,8"/>
                             <PasswordBox x:Name="regPassword" Height="40" Background="#0A0A0A" Foreground="White" VerticalContentAlignment="Center" Padding="12,0" FontSize="14" BorderBrush="#333"/>
 
-                            <TextBlock x:Name="lblRegReferralTitle" Text="COD INVITAȚIE / REFERRAL (OPȚIONAL)" Foreground="#43b581" FontSize="10" FontWeight="Bold" Margin="0,15,0,8"/>
+                            <TextBlock Text="DISCORD USERNAME (OPȚIONAL)" Foreground="Gray" FontSize="10" FontWeight="Bold" Margin="0,15,0,8"/>
+                            <TextBox x:Name="regDiscord" Height="40" Background="#0A0A0A" Foreground="White" VerticalContentAlignment="Center" Padding="12,0" FontSize="14" BorderBrush="#333"/>
+
+                            <TextBlock Text="COD INVITAȚIE / REFERRAL (OPȚIONAL)" Foreground="#43b581" FontSize="10" FontWeight="Bold" Margin="0,15,0,8"/>
                             <TextBox x:Name="regReferral" Height="40" Background="#0A0A0A" Foreground="#43b581" VerticalContentAlignment="Center" Padding="12,0" FontSize="14" BorderBrush="#43b581"/>
 
                             <Button x:Name="btnConfirmRegister" Content="CREEAZĂ CONT" Click="btnConfirmRegister_Click" Height="55" Margin="0,25,0,0" Style="{StaticResource LaunchButtonStyle}"/>
@@ -375,94 +294,59 @@
                     <Rectangle Fill="Black" Opacity="0.90"/>
                     <Border Background="#1A1A1A" Width="400" CornerRadius="20" BorderBrush="#43b581" BorderThickness="1.5" VerticalAlignment="Center" Padding="10">
                         <StackPanel Margin="25">
-                            <TextBlock x:Name="lblReferralPromptTitle" Text="🎁 SISTEM DE INVITAȚII" Foreground="White" FontSize="22" FontWeight="Bold" TextAlignment="Center"/>
+                            <TextBlock Text="🎁 SISTEM DE INVITAȚII" Foreground="White" FontSize="22" FontWeight="Bold" TextAlignment="Center"/>
 
-                            <TextBlock x:Name="lblReferralPromptDesc" Text="Cine te-a adus pe server?&#x0a;Introdu ID-ul prietenului pentru a primi 1,000 Lei Bonus în joc!" 
-                                       Foreground="LightGray" TextWrapping="Wrap" Margin="0,15,0,20" TextAlignment="Center" FontSize="13" LineHeight="18"/>
+                            <TextBlock Text="Cine te-a adus pe server?&#x0a;Introdu ID-ul prietenului pentru a primi 1,000 Lei Bonus în joc!" 
+                       Foreground="LightGray" TextWrapping="Wrap" Margin="0,15,0,20" TextAlignment="Center" FontSize="13" LineHeight="18"/>
 
                             <TextBox x:Name="txtReferralCode" Height="45" Margin="0,0,0,15" TextAlignment="Center" VerticalContentAlignment="Center"
-                                     FontSize="18" Background="#0A0A0A" Foreground="#43b581" BorderBrush="#333" FontWeight="Bold"/>
+                     FontSize="18" Background="#0A0A0A" Foreground="#43b581" BorderBrush="#333" FontWeight="Bold"/>
 
                             <Button x:Name="btnSubmitReferral" Content="TRIMITE CODUL" Style="{StaticResource LaunchButtonStyle}" 
-                                    Height="45" Click="btnSubmitReferral_Click" FontSize="15"/>
+                    Height="45" Click="btnSubmitReferral_Click" FontSize="15"/>
 
                             <Button x:Name="btnSkipReferral" Content="SARI PESTE (NU AM NICIUN COD)" 
-                                    Background="Transparent" Foreground="Gray" Height="35" Margin="0,15,0,0" 
-                                    Click="btnSkipReferral_Click" BorderThickness="0" Cursor="Hand" FontWeight="Bold" FontSize="11"/>
+                    Background="Transparent" Foreground="Gray" Height="35" Margin="0,15,0,0" 
+                    Click="btnSkipReferral_Click" BorderThickness="0" Cursor="Hand" FontWeight="Bold" FontSize="11"/>
                         </StackPanel>
                     </Border>
                 </Grid>
 
                 <Grid x:Name="pnlSettings" Visibility="Collapsed" Panel.ZIndex="500">
                     <Rectangle Fill="Black" Opacity="0.85"/>
-                    <Border Background="#1A1A1A" Width="500" Height="520" CornerRadius="25" BorderBrush="#43b581" BorderThickness="1.5" VerticalAlignment="Center">
+                    <Border Background="#1A1A1A" Width="500" Height="500" CornerRadius="25" BorderBrush="#43b581" BorderThickness="1.5" VerticalAlignment="Center">
                         <Grid>
                             <StackPanel Margin="30">
                                 <Grid Margin="0,0,0,20">
-                                    <TextBlock x:Name="lblSettingsTitle" Text="SETĂRI AVANSATE" Foreground="White" FontSize="22" FontWeight="Bold"/>
-                                    <Button Content="✕" Click="BtnCloseSettings_Click" HorizontalAlignment="Right" Background="Transparent" Foreground="Gray" BorderThickness="0" FontSize="20" Cursor="Hand"/>
+                                    <TextBlock Text="SETĂRI AVANSATE" Foreground="White" FontSize="22" FontWeight="Bold"/>
+                                    <Button Content="✕" Click="btnCloseSettings_Click" HorizontalAlignment="Right" Background="Transparent" Foreground="Gray" BorderThickness="0" FontSize="20" Cursor="Hand"/>
                                 </Grid>
 
-                                <StackPanel x:Name="pnlDiscordLinkSettings" Margin="0,10,0,0">
-                                    <TextBlock x:Name="lblDiscordLinkTitle" Text="🔗 ASOCIERE CONT DISCORD" Foreground="#2ecc71" FontSize="16" FontWeight="Bold" Margin="0,0,0,5"/>
-                                    <TextBlock x:Name="lblDiscordLinkDesc" Text="Asociază-ți contul de Minecraft cu cel de Discord pentru a primi acces la tickete!" Foreground="#b5bac1" FontSize="12" TextWrapping="Wrap" Margin="0,0,0,10"/>
-                                    <Grid>
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="Auto"/>
-                                        </Grid.ColumnDefinitions>
-
-                                        <TextBox x:Name="txtDiscordLinkCode" Text="********" IsReadOnly="True" FontSize="16" FontWeight="Bold" Background="#1e1f22" Foreground="White" BorderBrush="#333" Padding="10" TextAlignment="Center"/>
-                                        <Button x:Name="btnGenerateLinkCode" Grid.Column="1" Content="GENEREAZĂ COD LINK" Background="#7289DA" Foreground="White" FontWeight="Bold" Padding="15,0" Margin="10,0,0,0" BorderThickness="0" Cursor="Hand" Click="btnGenerateLinkCode_Click">
-                                            <Button.Resources>
-                                                <Style TargetType="Border">
-                                                    <Setter Property="CornerRadius" Value="8"/>
-                                                </Style>
-                                            </Button.Resources>
-                                        </Button>
-                                    </Grid>
-                                </StackPanel>
-
-                                <StackPanel x:Name="pnlDiscordLinkedStatus" Margin="0,10,0,0" Visibility="Collapsed">
-                                    <Border Background="#1e1f22" Padding="15" CornerRadius="8">
-                                        <StackPanel>
-                                            <TextBlock x:Name="lblDiscordLinkedTitle" Text="✅ CONT CONECTAT LA DISCORD" Foreground="#2ecc71" FontSize="16" FontWeight="Bold" HorizontalAlignment="Center" Margin="0,0,0,5"/>
-                                            <TextBlock x:Name="lblDiscordLinkedDesc" Text="Contul tău este sincronizat. Beneficiezi de toate avantajele pe server!" Foreground="#b5bac1" FontSize="12" TextWrapping="Wrap" HorizontalAlignment="Center"/>
-                                        </StackPanel>
-                                    </Border>
-                                </StackPanel>
-
-                                <TextBlock x:Name="lblJvmArgsTitle" Text="ARGUMENTE JAVA (JVM)" Foreground="Gray" FontSize="11" FontWeight="Bold" Margin="0,15,0,5"/>
+                                <TextBlock Text="ARGUMENTE JAVA (JVM)" Foreground="Gray" FontSize="11" FontWeight="Bold" Margin="0,10,0,5"/>
                                 <TextBox x:Name="txtJvmArgs" Height="60" Background="#0A0A0A" Foreground="#43b581" VerticalContentAlignment="Top" Padding="10" BorderBrush="#333" Margin="0,0,0,15" TextWrapping="Wrap" AcceptsReturn="True" FontSize="11" Text="-XX:+UseG1GC -Xmx4G"/>
 
-                                <TextBlock x:Name="lblGamePathTitle" Text="CALE JOC" Foreground="Gray" FontSize="11" FontWeight="Bold" Margin="0,0,0,5"/>
-                                <TextBox x:Name="txtGamePath" IsReadOnly="True" Height="35" Background="#0A0A0A" Foreground="Gray" VerticalContentAlignment="Center" Padding="12,0" BorderBrush="#333" Margin="0,0,0,15"/>
+                                <TextBlock Text="CALE JOC" Foreground="Gray" FontSize="11" FontWeight="Bold" Margin="0,0,0,5"/>
+                                <TextBox x:Name="txtGamePath" IsReadOnly="True" Height="35" Background="#0A0A0A" Foreground="Gray" VerticalContentAlignment="Center" Padding="12,0" BorderBrush="#333" Margin="0,0,0,20"/>
 
-                                <TextBlock x:Name="lblWebLoginTitle" Text="LOGIN RAPID BROWSER" Foreground="Gray" FontSize="11" FontWeight="Bold" Margin="0,0,0,5"/>
-                                <Border Background="#0A0A0A" CornerRadius="10" Padding="10" BorderBrush="#333" BorderThickness="1" Margin="0,0,0,10">
+                                <TextBlock Text="LOGIN RAPID BROWSER" Foreground="Gray" FontSize="11" FontWeight="Bold" Margin="0,0,0,5"/>
+                                <Border Background="#0A0A0A" CornerRadius="10" Padding="10" BorderBrush="#333" BorderThickness="1" Margin="0,0,0,15">
                                     <StackPanel>
                                         <Grid>
                                             <Grid.ColumnDefinitions>
                                                 <ColumnDefinition Width="*"/>
                                                 <ColumnDefinition Width="Auto"/>
                                             </Grid.ColumnDefinitions>
-                                            <TextBox x:Name="txtWebToken" Text="********" IsReadOnly="True" FontSize="16" FontWeight="Bold" Background="#1e1f22" Foreground="#43b581" BorderBrush="#333" Padding="10" TextAlignment="Center"/>
-                                            <Button x:Name="btnShowWebToken" Grid.Column="1" Content="AFIȘEAZĂ COD" Background="#333" Foreground="White" FontWeight="Bold" Padding="15,0" Margin="10,0,0,0" BorderThickness="0" Cursor="Hand" Click="btnShowWebToken_Click">
-                                                <Button.Resources>
-                                                    <Style TargetType="Border">
-                                                        <Setter Property="CornerRadius" Value="8"/>
-                                                    </Style>
-                                                </Button.Resources>
-                                            </Button>
+                                            <TextBlock x:Name="txtWebToken" Text="********" Foreground="#43b581" FontSize="16" FontWeight="Bold" VerticalAlignment="Center" Margin="5,0"/>
+                                            <Button x:Name="btnShowWebToken" Grid.Column="1" Content="AFIȘEAZĂ COD" Padding="10,5" Click="btnShowWebToken_Click" Background="#333" Foreground="White" BorderThickness="0" Cursor="Hand" FontSize="10" FontWeight="Bold"/>
                                         </Grid>
-                                        <Button x:Name="btnOpenWebLogin" Content="DESCHIDE SITE-UL ȘI LOGHEAZĂ-MĂ" Margin="0,10,0,0" Background="#43b581" Foreground="Black" FontWeight="Bold" Padding="8" Click="btnOpenWebLogin_Click" BorderThickness="0" Cursor="Hand" FontSize="10"/>
-                                        <TextBlock x:Name="lblWebLoginWarn" Text="* Codul este de unică folosință și expiră la utilizare." Foreground="#555" FontSize="8" Margin="0,5,0,0" FontStyle="Italic" HorizontalAlignment="Center"/>
+                                        <Button Content="DESCHIDE SITE-UL ȘI LOGHEAZĂ-MĂ" Margin="0,10,0,0" Background="#43b581" Foreground="Black" FontWeight="Bold" Padding="8" Click="btnOpenWebLogin_Click" BorderThickness="0" Cursor="Hand" FontSize="10"/>
+                                        <TextBlock Text="* Codul este de unică folosință și expiră la utilizare." Foreground="#555" FontSize="8" Margin="0,5,0,0" FontStyle="Italic" HorizontalAlignment="Center"/>
                                     </StackPanel>
                                 </Border>
 
                                 <UniformGrid Columns="2" Margin="0,10">
-                                    <Button x:Name="btnLogoutSettings" Content="DECONECTARE" Click="btnLogout_Click" Background="#333" Foreground="White" Height="40" Margin="5" Style="{StaticResource LaunchButtonStyle}" FontSize="11"/>
-                                    <Button x:Name="btnDeleteData" Content="ȘTERGE DATE" Click="btnDeleteData_Click" Background="#E81123" Foreground="White" Height="40" Margin="5" Style="{StaticResource LaunchButtonStyle}" FontSize="11"/>
+                                    <Button Content="DECONECTARE" Click="btnLogout_Click" Background="#333" Foreground="White" Height="40" Margin="5" Style="{StaticResource LaunchButtonStyle}" FontSize="11"/>
+                                    <Button Content="ȘTERGE DATE" Click="btnDeleteData_Click" Background="#E81123" Foreground="White" Height="40" Margin="5" Style="{StaticResource LaunchButtonStyle}" FontSize="11"/>
                                 </UniformGrid>
                             </StackPanel>
 

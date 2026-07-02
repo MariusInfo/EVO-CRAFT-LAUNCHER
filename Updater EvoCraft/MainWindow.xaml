@@ -1,28 +1,78 @@
 ﻿<Window x:Class="Updater_EvoCraft.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="EVO CRAFT UPDATER" Height="220" Width="450" 
+        Title="EVO CRAFT SETUP" Height="280" Width="500" 
         WindowStyle="None" AllowsTransparency="True" Background="Transparent"
         WindowStartupLocation="CenterScreen" Topmost="True">
 
-    <Border CornerRadius="15" Background="#121212" BorderBrush="#43b581" BorderThickness="2">
-        <Grid Margin="25">
-            <StackPanel VerticalAlignment="Center">
-                <TextBlock Text="EVO CRAFT" FontSize="28" FontWeight="Black" Foreground="#43b581" HorizontalAlignment="Center">
-                    <TextBlock.Effect>
-                        <DropShadowEffect Color="#43b581" BlurRadius="15" ShadowDepth="0"/>
-                    </TextBlock.Effect>
-                </TextBlock>
+    <Window.Resources>
+        <!-- Custom Template pentru un ProgressBar elegant cu margini rotunjite și efect de glow -->
+        <Style x:Key="ElegantProgressBar" TargetType="ProgressBar">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ProgressBar">
+                        <Grid>
+                            <!-- Fundalul barei de progres -->
+                            <Border Background="#1AFFFFFF" CornerRadius="7" BorderBrush="#33FFFFFF" BorderThickness="1"/>
+                            <Border x:Name="PART_Track" CornerRadius="7"/>
+                            <!-- Indicatorul de progres (partea care se umple) -->
+                            <Border x:Name="PART_Indicator" CornerRadius="7" Background="#43b581" HorizontalAlignment="Left">
+                                <Border.Effect>
+                                    <DropShadowEffect Color="#43b581" BlurRadius="12" ShadowDepth="0" Opacity="0.6"/>
+                                </Border.Effect>
+                            </Border>
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
 
-                <TextBlock x:Name="lblStatus" Text="Se verifică fișierele..." Foreground="White" HorizontalAlignment="Center" Margin="0,15,0,5" FontSize="14"/>
+    <!-- Am adăugat un Grid ca element principal (root) pentru a fi perfect compatibil 
+         cu logica din C# unde am folosit (this.Content is Grid mainGrid) -->
+    <Grid>
+        <!-- Fereastra principală cu design modern, margini rotunjite și gradient -->
+        <Border CornerRadius="15" BorderBrush="#43b581" BorderThickness="2" ClipToBounds="True">
+            <Border.Background>
+                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                    <GradientStop Color="#181A1F" Offset="0.0"/>
+                    <GradientStop Color="#0B0C0E" Offset="1.0"/>
+                </LinearGradientBrush>
+            </Border.Background>
 
-                <Grid Margin="0,10,0,0">
-                    <ProgressBar x:Name="pbUpdate" Height="12" Background="#1AFFFFFF" Foreground="#43b581" BorderThickness="0" Minimum="0" Maximum="100"/>
-                    <Border CornerRadius="6" Background="Transparent" BorderBrush="#33FFFFFF" BorderThickness="1"/>
-                </Grid>
+            <Grid>
+                <!-- Efect de luminozitate (glow) pe fundal pentru un aspect premium (ambient) -->
+                <Ellipse Width="350" Height="350" Fill="#43b581" Opacity="0.05" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,-80,0,0">
+                    <Ellipse.Effect>
+                        <BlurEffect Radius="120"/>
+                    </Ellipse.Effect>
+                </Ellipse>
 
-                <TextBlock x:Name="lblPercentage" Text="0%" Foreground="#888888" FontSize="11" HorizontalAlignment="Center" Margin="0,5,0,0"/>
-            </StackPanel>
-        </Grid>
-    </Border>
+                <!-- Conținutul actual -->
+                <StackPanel VerticalAlignment="Center" Margin="30">
+
+                    <!-- Titlul Evo Craft -->
+                    <TextBlock Text="EVO CRAFT" FontSize="34" FontWeight="Black" Foreground="#43b581" HorizontalAlignment="Center">
+                        <TextBlock.Effect>
+                            <DropShadowEffect Color="#43b581" BlurRadius="20" ShadowDepth="0" Opacity="0.85"/>
+                        </TextBlock.Effect>
+                    </TextBlock>
+
+                    <!-- Subtitlu elegant -->
+                    <TextBlock Text="SYSTEM SETUP &amp; UPDATER" FontSize="11" FontWeight="Bold" Foreground="#555555" HorizontalAlignment="Center" Margin="0,2,0,25"/>
+
+                    <!-- Text Status -->
+                    <TextBlock x:Name="lblStatus" Text="Se verifică fișierele..." Foreground="#EAEAEA" HorizontalAlignment="Center" Margin="0,0,0,12" FontSize="14" FontWeight="SemiBold"/>
+
+                    <!-- Bara de progres stilizată -->
+                    <Grid Margin="0,5,0,0">
+                        <ProgressBar x:Name="pbUpdate" Height="14" Style="{StaticResource ElegantProgressBar}" Minimum="0" Maximum="100"/>
+                    </Grid>
+
+                    <!-- Text Procentaj -->
+                    <TextBlock x:Name="lblPercentage" Text="0%" Foreground="#888888" FontSize="13" FontWeight="Bold" HorizontalAlignment="Center" Margin="0,12,0,0"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+    </Grid>
 </Window>

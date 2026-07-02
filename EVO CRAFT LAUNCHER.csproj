@@ -18,7 +18,20 @@
 		<PublishReadyToRun>false</PublishReadyToRun>
 		<PublishDir>bin\FINAL_LAUNCHER\</PublishDir>
 		<SatelliteResourceLanguages>en-US</SatelliteResourceLanguages>
+		<GenerateAssemblyInfo>false</GenerateAssemblyInfo>
 	</PropertyGroup>
+
+	<ItemGroup>
+		<Compile Remove="EVO CRAFT LAUNCHER\**" />
+		<Compile Remove="Updater EvoCraft\**" />
+		<EmbeddedResource Remove="EVO CRAFT LAUNCHER\**" />
+		<EmbeddedResource Remove="Updater EvoCraft\**" />
+		<None Remove="EVO CRAFT LAUNCHER\**" />
+		<None Remove="Updater EvoCraft\**" />
+		<Page Remove="EVO CRAFT LAUNCHER\**" />
+		<Page Remove="Updater EvoCraft\**" />
+	</ItemGroup>
+
 	<ItemGroup>
 		<None Remove="background.mp4" />
 		<None Remove="discord.png" />
@@ -29,6 +42,7 @@
 		<None Remove="tiktok.png" />
 		<None Remove="youtube.png" />
 	</ItemGroup>
+
 	<ItemGroup>
 		<Content Include="background.mp4">
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
@@ -40,6 +54,7 @@
 		<Resource Include="tiktok.png" />
 		<Resource Include="youtube.png" />
 	</ItemGroup>
+
 	<ItemGroup>
 		<PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
 		<PackageReference Include="CmlLib.Core" Version="4.0.6" />
@@ -53,6 +68,8 @@
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
-		<PackageReference Include="System.Management" Version="10.0.1" />
+		<PackageReference Include="System.Management" Version="10.0.1">
+			<PrivateAssets>all</PrivateAssets>
+		</PackageReference>
 	</ItemGroup>
 </Project>

@@ -28,7 +28,6 @@ using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
 using System.Runtime.InteropServices;
-using Button = System.Windows.Controls.Button;
 
 namespace EVO_CRAFT_LAUNCHER
 {
@@ -67,14 +66,14 @@ namespace EVO_CRAFT_LAUNCHER
 
     public partial class MainWindow : Window
     {
-        private const string CurrentLauncherVersion = "2.7";
+        private const string CurrentLauncherVersion = "2.6";
 
         private string OnlineLauncherVersion = "";
         private string LauncherDownloadUrl = "";
         private string CurrentModsDownloadUrl = "";
 
         // =========================================================================
-        // VARIABILE SISTEM SECTIUNI
+        // VARIABILE SISTEM SECTIUNI (4 MODURI)
         // =========================================================================
         private string _selectedGameMode = "Survival";
 
@@ -84,15 +83,18 @@ namespace EVO_CRAFT_LAUNCHER
         private string OnlineModpackVersionSkyblock = "1.0";
         private string ModsDownloadUrlSkyblock = "";
 
+        private string OnlineModpackVersionCreative = "1.0";
+        private string ModsDownloadUrlCreative = "";
+
         private string OnlineModpackVersionParkour = "1.0";
         private string ModsDownloadUrlParkour = "";
 
-        private string ServerIP = "144.76.98.184";
-        private string ServerPort = "5000";
+        private string ServerIP = "45.13.151.19";
+        private string ServerPort = "25565";
 
-        private static readonly string VpsApiUrl = "http://144.76.98.184:5011";
+        private static readonly string VpsApiUrl = "http://45.13.151.19:5003";
         private static readonly string ApiAuthKey = "EVOCRAFTSECURITYPASSWORD2026";
-        private static readonly string PlaytimeVpsApiUrl = "http://144.76.98.184:5010/playtime";
+        private static readonly string PlaytimeVpsApiUrl = "http://45.13.151.19:5000/playtime";
 
         private MSession? _session;
         private MSession? _premiumSession = null;
@@ -115,12 +117,12 @@ namespace EVO_CRAFT_LAUNCHER
         private bool _handshakeCompleted = false;
         private bool _isHttpRunning = false;
         private string _currentWebToken = "";
-        private string _personalId = "-";
 
         // VARIABILE MENTENANȚĂ
         private bool _isMaintenanceActive = false;
         private bool _isMaintenanceSurvival = false;
         private bool _isMaintenanceSkyblock = false;
+        private bool _isMaintenanceCreative = false;
         private bool _isMaintenanceParkour = false;
 
         private bool _isOwnerBypassActive = false;
@@ -136,13 +138,6 @@ namespace EVO_CRAFT_LAUNCHER
         private string VoiceChatModUrl = "";
         private string VoiceChatModFileName = "";
         private bool _isVoiceChatEnabled = false;
-
-        // --- VARIABILE PENTRU LINK DISCORD ---
-        private string _currentDiscordLinkCode = "";
-        private bool _isDiscordLinked = false;
-
-        // --- VARIABILE LIMBA ---
-        private string CurrentLanguage = "RO";
 
         // FUNCTIE PENTRU CURATAREA RAM-ULUI GENERAT DE WPF
         [DllImport("kernel32.dll")]
@@ -163,16 +158,12 @@ namespace EVO_CRAFT_LAUNCHER
             catch { }
         }
 
-        private string Loc(string ro, string en)
-        {
-            return CurrentLanguage == "EN" ? en : ro;
-        }
-
         public MainWindow()
         {
             InitializeComponent();
             DataContext = this;
             txtGamePath.Text = _userDataPath;
+            lblLauncherVersion.Text = $"VERSIUNE LAUNCHER: v{CurrentLauncherVersion}";
             InitializeDiscord();
             LoadSettings();
 
@@ -182,115 +173,18 @@ namespace EVO_CRAFT_LAUNCHER
                 string savedMode = File.ReadAllText(currentModeFile).Trim();
                 if (savedMode == "Survival" || savedMode == "Skyblock" || savedMode == "Creative" || savedMode == "Parkour")
                 {
-                    _selectedGameMode = savedMode == "Creative" ? "Survival" : savedMode;
+                    _selectedGameMode = savedMode;
                 }
             }
 
             string vcState = DecryptAndReadFile("voicechat_state.dat");
             _isVoiceChatEnabled = (vcState == "ON");
             UpdateVoiceChatUI();
-            UpdateModeButtonsUI();
 
-            string langFile = Path.Combine(_userDataPath, "language.txt");
-            if (File.Exists(langFile))
-            {
-                CurrentLanguage = File.ReadAllText(langFile).Trim();
-                if (CurrentLanguage != "EN" && CurrentLanguage != "RO") CurrentLanguage = "RO";
-                pnlLanguageSelect.Visibility = Visibility.Collapsed;
-                ApplyLanguage();
-                InitLauncherSequence();
-            }
-            else
-            {
-                SplashScreen.Visibility = Visibility.Collapsed;
-                pnlLanguageSelect.Visibility = Visibility.Visible;
-            }
+            UpdateModeButtonsUI();
+            InitLauncherSequence();
 
             Task.Run(async () => { await Task.Delay(2000); FlushMemory(); });
-        }
-
-        private void btnFirstRunRO_Click(object sender, RoutedEventArgs e)
-        {
-            SaveLanguage("RO");
-            pnlLanguageSelect.Visibility = Visibility.Collapsed;
-            SplashScreen.Visibility = Visibility.Visible;
-            InitLauncherSequence();
-        }
-
-        private void btnFirstRunEN_Click(object sender, RoutedEventArgs e)
-        {
-            SaveLanguage("EN");
-            pnlLanguageSelect.Visibility = Visibility.Collapsed;
-            SplashScreen.Visibility = Visibility.Visible;
-            InitLauncherSequence();
-        }
-
-        private void btnLangRO_Click(object sender, RoutedEventArgs e)
-        {
-            SaveLanguage("RO");
-        }
-
-        private void btnLangEN_Click(object sender, RoutedEventArgs e)
-        {
-            SaveLanguage("EN");
-        }
-
-        private void SaveLanguage(string lang)
-        {
-            CurrentLanguage = lang;
-            if (!Directory.Exists(_userDataPath)) Directory.CreateDirectory(_userDataPath);
-            File.WriteAllText(Path.Combine(_userDataPath, "language.txt"), lang);
-            ApplyLanguage();
-        }
-
-        private void ApplyLanguage()
-        {
-            Dispatcher.Invoke(() => {
-                if (FindName("lblLauncherTitleSub") is TextBlock lblLauncherTitleSub) lblLauncherTitleSub.Text = Loc("LAUNCHER OFICIAL", "OFFICIAL LAUNCHER");
-                if (FindName("lblTopPlaytimeTitle") is TextBlock lblTopPlaytimeTitle) lblTopPlaytimeTitle.Text = Loc("🏆 TOP PLAYTIME", "🏆 TOP PLAYTIME");
-                if (FindName("lblUsernameTitle") is TextBlock lblUsernameTitle) lblUsernameTitle.Text = Loc("NUME UTILIZATOR", "USERNAME");
-                if (FindName("lblPasswordTitle") is TextBlock lblPasswordTitle) lblPasswordTitle.Text = Loc("PAROLĂ", "PASSWORD");
-                if (FindName("btnOpenRegister") is Button btnOpenRegister) btnOpenRegister.Content = Loc("Nu ai cont? Înregistrează-te aici", "No account? Register here");
-                if (FindName("lblGameModeTitle") is TextBlock lblGameModeTitle) lblGameModeTitle.Text = Loc("🎮 MOD DE JOC", "🎮 GAME MODE");
-                if (FindName("lblJvmArgsTitle") is TextBlock lblJvmArgsTitle) lblJvmArgsTitle.Text = Loc("ARGUMENTE JAVA (JVM)", "JAVA ARGUMENTS (JVM)");
-                if (FindName("lblGamePathTitle") is TextBlock lblGamePathTitle) lblGamePathTitle.Text = Loc("CALE JOC", "GAME PATH");
-                if (FindName("lblWebLoginTitle") is TextBlock lblWebLoginTitle) lblWebLoginTitle.Text = Loc("LOGIN RAPID BROWSER", "QUICK BROWSER LOGIN");
-                if (FindName("btnOpenWebLogin") is Button btnOpenWebLogin) btnOpenWebLogin.Content = Loc("DESCHIDE SITE-UL ȘI LOGHEAZĂ-MĂ", "OPEN SITE AND LOGIN");
-                if (FindName("lblWebLoginWarn") is TextBlock lblWebLoginWarn) lblWebLoginWarn.Text = Loc("* Codul este de unică folosință și expiră la utilizare.", "* Code is single-use and expires upon use.");
-                if (FindName("btnDeleteData") is Button btnDeleteData) btnDeleteData.Content = Loc("ȘTERGE DATE", "DELETE DATA");
-                if (FindName("btnLogoutSettings") is Button btnLogoutSettings) btnLogoutSettings.Content = Loc("DECONECTARE", "LOGOUT");
-                if (FindName("lblSettingsTitle") is TextBlock lblSettingsTitle) lblSettingsTitle.Text = Loc("SETĂRI AVANSATE", "ADVANCED SETTINGS");
-                if (FindName("lblDiscordLinkTitle") is TextBlock lblDiscordLinkTitle) lblDiscordLinkTitle.Text = Loc("🔗 ASOCIERE CONT DISCORD", "🔗 LINK DISCORD ACCOUNT");
-                if (FindName("lblDiscordLinkDesc") is TextBlock lblDiscordLinkDesc) lblDiscordLinkDesc.Text = Loc("Asociază-ți contul de Minecraft cu cel de Discord pentru a primi acces la tickete!", "Link your Minecraft account with Discord to access tickets!");
-                if (FindName("btnGenerateLinkCode") is Button btnGenerateLinkCode) btnGenerateLinkCode.Content = Loc("GENEREAZĂ COD LINK", "GENERATE LINK CODE");
-                if (FindName("lblDiscordLinkedTitle") is TextBlock lblDiscordLinkedTitle) lblDiscordLinkedTitle.Text = Loc("✅ CONT CONECTAT LA DISCORD", "✅ ACCOUNT LINKED TO DISCORD");
-                if (FindName("lblDiscordLinkedDesc") is TextBlock lblDiscordLinkedDesc) lblDiscordLinkedDesc.Text = Loc("Contul tău este sincronizat. Beneficiezi de toate avantajele pe server!", "Your account is synced. Enjoy all server benefits!");
-                if (FindName("lblRegisterTitle") is TextBlock lblRegisterTitle) lblRegisterTitle.Text = Loc("CREARE CONT NOU", "CREATE NEW ACCOUNT");
-                if (FindName("lblRegUsernameTitle") is TextBlock lblRegUsernameTitle) lblRegUsernameTitle.Text = Loc("NUME UTILIZATOR", "USERNAME");
-                if (FindName("lblRegPasswordTitle") is TextBlock lblRegPasswordTitle) lblRegPasswordTitle.Text = Loc("PAROLĂ", "PASSWORD");
-                if (FindName("lblRegReferralTitle") is TextBlock lblRegReferralTitle) lblRegReferralTitle.Text = Loc("COD INVITAȚIE / REFERRAL (OPȚIONAL)", "INVITE / REFERRAL CODE (OPTIONAL)");
-                if (FindName("btnConfirmRegister") is Button btnConfirmRegister) btnConfirmRegister.Content = Loc("CREEAZĂ CONT", "CREATE ACCOUNT");
-                if (FindName("lblReferralPromptTitle") is TextBlock lblReferralPromptTitle) lblReferralPromptTitle.Text = Loc("🎁 SISTEM DE INVITAȚII", "🎁 REFERRAL SYSTEM");
-                if (FindName("lblReferralPromptDesc") is TextBlock lblReferralPromptDesc) lblReferralPromptDesc.Text = Loc("Cine te-a adus pe server?\nIntrodu ID-ul prietenului pentru a primi 1,000 Lei Bonus în joc!", "Who brought you to the server?\nEnter your friend's ID to receive a 1,000 Lei in-game bonus!");
-                if (FindName("btnSubmitReferral") is Button btnSubmitReferral) btnSubmitReferral.Content = Loc("TRIMITE CODUL", "SUBMIT CODE");
-                if (FindName("btnSkipReferral") is Button btnSkipReferral) btnSkipReferral.Content = Loc("SARI PESTE (NU AM NICIUN COD)", "SKIP (I DON'T HAVE A CODE)");
-                if (FindName("lblSplashLoadingText") is TextBlock lblSplashLoadingText) lblSplashLoadingText.Text = Loc("Se încarcă resursele...", "Loading resources...");
-                if (FindName("btnExitVps") is Button btnExitVps) btnExitVps.Content = Loc("ÎNCHIDE LAUNCHER", "CLOSE LAUNCHER");
-                if (FindName("lblPersonalIdTitle") is TextBlock lblPersonalIdTitle) lblPersonalIdTitle.Text = Loc("ID PERSONAL / REFERRAL", "PERSONAL ID / REFERRAL");
-
-                lblLauncherVersion.Text = Loc($"VERSIUNE LAUNCHER: v{CurrentLauncherVersion}", $"LAUNCHER VERSION: v{CurrentLauncherVersion}");
-
-                UpdateDatabaseUI(_isDatabaseLoggedIn);
-                if (_isPremiumMode) UpdatePremiumUI();
-                else { lblAccountType.Text = Loc("Cont Launcher", "Launcher Account"); }
-
-                UpdateVoiceChatUI();
-                UpdateModeButtonsUI();
-                UpdateLaunchButtonState();
-                if (_totalPlayTime != TimeSpan.Zero) UpdatePlaytimeUI();
-                _ = RefreshServerStatus();
-                _ = CheckForUpdates();
-            });
         }
 
         private void LoadSettings()
@@ -319,23 +213,15 @@ namespace EVO_CRAFT_LAUNCHER
                                 UpdatePlaytimeUI();
                             }
                         }
-
-                        // FORTARE REFRESH PE UI-UL WPF
                         Dispatcher.Invoke(() => {
-                            lstTopPlayed.ItemsSource = null; // Stergem sursa veche ca sa fortam WPF sa "uite" cache-ul
-                            lstTopPlayed.Items.Clear();      // Curatam manual item-urile
-
-                            lstTopPlayed.ItemsSource = allPlayers.Take(10).ToList(); // Punem lista noua
-                            lstTopPlayed.Items.Refresh();    // Spunem WPF-ului: "Deseneaza din nou elementele, acum!"
+                            lstTopPlayed.ItemsSource = allPlayers.Take(10).ToList();
                         });
                     }
                 }
             }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine("Eroare incarcare top playtime: " + ex.Message);
-            }
+            catch { }
         }
+
         private void EncryptAndSaveFile(string fileName, string content)
         {
             try
@@ -396,8 +282,7 @@ namespace EVO_CRAFT_LAUNCHER
             {
                 discordClient = new DiscordRpcClient("1443314390899232929");
                 discordClient.Initialize();
-                string displayMode = _selectedGameMode == "Survival" ? "Survival & Creative" : _selectedGameMode;
-                UpdatePresence(Loc("În Launcher", "In Launcher"), Loc($"Pregătire joc ({displayMode})", $"Preparing game ({displayMode})"));
+                UpdatePresence("În Launcher", $"Pregătire joc ({_selectedGameMode})");
             }
             catch { }
         }
@@ -411,7 +296,7 @@ namespace EVO_CRAFT_LAUNCHER
                 State = state,
                 Timestamps = Timestamps.Now,
                 Assets = new Assets() { LargeImageKey = "logo", LargeImageText = "EVO CRAFT Official" },
-                Buttons = new DiscordRPC.Button[] { new DiscordRPC.Button() { Label = Loc("Alătură-te pe Discord", "Join Discord"), Url = "https://discord.gg/e9yHMaMwTQ" } }
+                Buttons = new DiscordRPC.Button[] { new DiscordRPC.Button() { Label = "Alătură-te pe Discord", Url = "https://discord.gg/e9yHMaMwTQ" } }
             });
         }
 
@@ -461,7 +346,7 @@ namespace EVO_CRAFT_LAUNCHER
         private void SetSplashStatus(string text)
         {
             Dispatcher.Invoke(() => {
-                if (lblSplashLoadingText != null) lblSplashLoadingText.Text = text;
+                lblSplashLoadingText.Text = text;
             });
         }
 
@@ -494,7 +379,7 @@ namespace EVO_CRAFT_LAUNCHER
         {
             if (!Directory.Exists(_userDataPath)) Directory.CreateDirectory(_userDataPath);
 
-            SetSplashStatus(Loc("Conectare la serverul de securitate...", "Connecting to security server..."));
+            SetSplashStatus("Conectare la serverul de securitate...");
             bool apiResponse = await LoadConfigFromVps();
 
             if (!apiResponse)
@@ -502,7 +387,7 @@ namespace EVO_CRAFT_LAUNCHER
                 Dispatcher.Invoke(() => {
                     if (lblSplashLoadingText != null)
                     {
-                        lblSplashLoadingText.Text = Loc("VPS OFFLINE - CONTACTEAZĂ UN ADMIN", "VPS OFFLINE - CONTACT AN ADMIN");
+                        lblSplashLoadingText.Text = "VPS OFFLINE - CONTACTEAZĂ UN ADMIN";
                         lblSplashLoadingText.Foreground = Brushes.Red;
                     }
                     if (pbSplashLoading != null) pbSplashLoading.Visibility = Visibility.Collapsed;
@@ -511,26 +396,26 @@ namespace EVO_CRAFT_LAUNCHER
                 return;
             }
 
-            SetSplashStatus(Loc("Se verifică statusul securității (HWID)...", "Checking security status (HWID)..."));
+            SetSplashStatus("Se verifică statusul securității (HWID)...");
             await CheckGlobalBanAsync();
 
             _isOwnerBypassActive = LoadBypassEncrypted();
             if (_isMaintenanceActive && !_isOwnerBypassActive)
             {
                 Dispatcher.Invoke(() => {
-                    lblSplashLoadingText.Text = Loc("SERVER ÎN MENTENANȚĂ GLOBALĂ", "SERVER IN GLOBAL MAINTENANCE");
+                    lblSplashLoadingText.Text = "SERVER ÎN MENTENANȚĂ GLOBALĂ";
                     lblSplashLoadingText.Foreground = Brushes.Orange;
                     pbSplashLoading.Visibility = Visibility.Collapsed;
                     btnExitVps.Visibility = Visibility.Visible;
-                    btnExitVps.Content = Loc("ÎNCHIDE (MENTENANȚĂ)", "CLOSE (MAINTENANCE)");
+                    btnExitVps.Content = "ÎNCHIDE (MENTENANȚĂ)";
                 });
                 return;
             }
 
-            SetSplashStatus(Loc("Se verifică versiunea aplicației...", "Checking application version..."));
+            SetSplashStatus("Se verifică versiunea aplicației...");
             if (!string.IsNullOrEmpty(OnlineLauncherVersion) && OnlineLauncherVersion != CurrentLauncherVersion)
             {
-                SetSplashStatus(Loc("Update disponibil! Se pornește Updater-ul...", "Update available! Starting Updater..."));
+                SetSplashStatus("Update disponibil! Se pornește Updater-ul...");
                 await Task.Delay(2000);
                 try
                 {
@@ -550,32 +435,32 @@ namespace EVO_CRAFT_LAUNCHER
                     }
                     else
                     {
-                        MessageBox.Show(Loc($"Fișierul 'Updater EvoCraft.exe' lipsește!\nCale: {updaterPath}", $"File 'Updater EvoCraft.exe' is missing!\nPath: {updaterPath}"), Loc("Eroare Update", "Update Error"));
+                        MessageBox.Show($"Fișierul 'Updater EvoCraft.exe' lipsește!\nCale: {updaterPath}", "Eroare Update");
                     }
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show(Loc("Eroare critică updater: ", "Critical updater error: ") + ex.Message);
+                    MessageBox.Show("Eroare critică updater: " + ex.Message);
                 }
             }
 
-            SetSplashStatus(Loc("Se verifică setările de administrator...", "Checking administrator settings..."));
+            SetSplashStatus("Se verifică setările de administrator...");
             if (_isOwnerBypassActive)
             {
                 Dispatcher.Invoke(() => {
                     btnOwnerBypass.Background = Brushes.Gold;
-                    btnOwnerBypass.Content = Loc("ACTIV (Apasă STOP)", "ACTIVE (Press STOP)");
+                    btnOwnerBypass.Content = "ACTIV (Apasă STOP)";
                     btnOwnerBypass.Foreground = Brushes.Black;
                 });
             }
 
-            SetSplashStatus(Loc("Se încarcă baza de date locală...", "Loading local database..."));
+            SetSplashStatus("Se încarcă baza de date locală...");
             officialMods = LoadAndDecryptMods(_selectedGameMode);
 
-            SetSplashStatus(Loc("Se verifică versiunea modpack-ului...", "Checking modpack version..."));
+            SetSplashStatus("Se verifică versiunea modpack-ului...");
             await CheckForUpdates();
 
-            SetSplashStatus(Loc("Se verifică statusul serverului...", "Checking server status..."));
+            SetSplashStatus("Se verifică statusul serverului...");
             await RefreshServerStatus();
 
             string loginMode = DecryptAndReadFile("login_mode.dat");
@@ -583,7 +468,7 @@ namespace EVO_CRAFT_LAUNCHER
 
             if (loginMode == "premium")
             {
-                SetSplashStatus(Loc("Autentificare automată Microsoft...", "Automatic Microsoft login..."));
+                SetSplashStatus("Autentificare automată Microsoft...");
                 if (File.Exists(Path.Combine(_userDataPath, "login_cache")))
                 {
                     await PerformMicrosoftLogin(true);
@@ -591,7 +476,7 @@ namespace EVO_CRAFT_LAUNCHER
             }
             else if (!string.IsNullOrEmpty(savedSession))
             {
-                SetSplashStatus(Loc("Autentificare automată cont Evo...", "Automatic Evo account login..."));
+                SetSplashStatus("Autentificare automată cont Evo...");
                 string[] savedData = savedSession.Split('|');
                 if (savedData.Length >= 2)
                 {
@@ -626,12 +511,12 @@ namespace EVO_CRAFT_LAUNCHER
 
             if (!_isPremiumMode && !_isDatabaseLoggedIn)
             {
-                SetSplashStatus(Loc("Pregătire interfață utilizator...", "Preparing user interface..."));
+                SetSplashStatus("Pregătire interfață utilizator...");
                 UpdateCrackedUI();
                 await ShowProfile(string.IsNullOrWhiteSpace(txtUsername.Text) ? "MHF_Steve" : txtUsername.Text);
             }
 
-            SetSplashStatus(Loc("Launcher pregătit!", "Launcher ready!"));
+            SetSplashStatus("Launcher pregătit!");
             UpdateLaunchButtonState();
             await Task.Delay(1500);
             Dispatcher.Invoke(() => SplashScreen.Visibility = Visibility.Collapsed);
@@ -665,6 +550,9 @@ namespace EVO_CRAFT_LAUNCHER
                             OnlineModpackVersionSkyblock = jobj.Value<string?>("modpack_version_skyblock") ?? OnlineModpackVersionSkyblock;
                             ModsDownloadUrlSkyblock = jobj.Value<string?>("mods_url_skyblock") ?? CurrentModsDownloadUrl;
 
+                            OnlineModpackVersionCreative = jobj.Value<string?>("modpack_version_creative") ?? OnlineModpackVersionCreative;
+                            ModsDownloadUrlCreative = jobj.Value<string?>("mods_url_creative") ?? CurrentModsDownloadUrl;
+
                             OnlineModpackVersionParkour = jobj.Value<string?>("modpack_version_parkour") ?? OnlineModpackVersionParkour;
                             ModsDownloadUrlParkour = jobj.Value<string?>("mods_url_parkour") ?? CurrentModsDownloadUrl;
 
@@ -676,8 +564,10 @@ namespace EVO_CRAFT_LAUNCHER
 
                             _isMaintenanceSurvival = jobj.Value<bool?>("is_maintenance_survival") ?? false;
                             _isMaintenanceSkyblock = jobj.Value<bool?>("is_maintenance_skyblock") ?? false;
+                            _isMaintenanceCreative = jobj.Value<bool?>("is_maintenance_creative") ?? false;
                             _isMaintenanceParkour = jobj.Value<bool?>("is_maintenance_parkour") ?? false;
 
+                            // API URL PENTRU MODUL DE VOICE CHAT
                             VoiceChatModUrl = jobj.Value<string?>("voice_chat_url") ?? VoiceChatModUrl;
                             if (!string.IsNullOrEmpty(VoiceChatModUrl))
                             {
@@ -699,6 +589,8 @@ namespace EVO_CRAFT_LAUNCHER
                 btnModeSurvival.Foreground = Brushes.Gray;
                 btnModeSkyblock.Background = Brushes.Transparent;
                 btnModeSkyblock.Foreground = Brushes.Gray;
+                btnModeCreative.Background = Brushes.Transparent;
+                btnModeCreative.Foreground = Brushes.Gray;
                 btnModeParkour.Background = Brushes.Transparent;
                 btnModeParkour.Foreground = Brushes.Gray;
 
@@ -706,6 +598,7 @@ namespace EVO_CRAFT_LAUNCHER
 
                 if (_selectedGameMode == "Survival") { btnModeSurvival.Background = activeBrush; btnModeSurvival.Foreground = Brushes.White; }
                 else if (_selectedGameMode == "Skyblock") { btnModeSkyblock.Background = activeBrush; btnModeSkyblock.Foreground = Brushes.White; }
+                else if (_selectedGameMode == "Creative") { btnModeCreative.Background = activeBrush; btnModeCreative.Foreground = Brushes.White; }
                 else if (_selectedGameMode == "Parkour") { btnModeParkour.Background = activeBrush; btnModeParkour.Foreground = Brushes.White; }
             });
         }
@@ -773,7 +666,7 @@ namespace EVO_CRAFT_LAUNCHER
             }
             catch (Exception ex)
             {
-                MessageBox.Show(Loc($"Eroare la schimbarea secțiunii! Asigură-te că jocul este oprit complet.\n\nEroare: {ex.Message}", $"Error changing section! Make sure the game is fully closed.\n\nError: {ex.Message}"), Loc("Eroare Switch", "Switch Error"));
+                MessageBox.Show($"Eroare la schimbarea secțiunii! Asigură-te că jocul este oprit complet.\n\nEroare: {ex.Message}", "Eroare Switch");
             }
         }
 
@@ -782,7 +675,7 @@ namespace EVO_CRAFT_LAUNCHER
             if (_isInstallingModpack || _isLaunching) return;
             if (_isMaintenanceSurvival && !_isOwnerBypassActive)
             {
-                MessageBox.Show(Loc("Secțiunea Survival & Creative este momentan în MENTENANȚĂ!\nTe rugăm să revii mai târziu.", "Survival & Creative section is currently under MAINTENANCE!\nPlease come back later."), Loc("Mentenanță", "Maintenance"), MessageBoxButton.OK, MessageBoxImage.Information);
+                MessageBox.Show("Secțiunea Survival este momentan în MENTENANȚĂ!\nTe rugăm să revii mai târziu.", "Mentenanță", MessageBoxButton.OK, MessageBoxImage.Information);
                 return;
             }
             SwitchFoldersForMode("Survival");
@@ -790,8 +683,7 @@ namespace EVO_CRAFT_LAUNCHER
             officialMods = LoadAndDecryptMods("Survival");
             UpdateModeButtonsUI();
             UpdateLaunchButtonState();
-            string displayMode = _selectedGameMode == "Survival" ? "Survival & Creative" : _selectedGameMode;
-            UpdatePresence(Loc("În Launcher", "In Launcher"), Loc($"Pregătire joc ({displayMode})", $"Preparing game ({displayMode})"));
+            UpdatePresence("În Launcher", $"Pregătire joc ({_selectedGameMode})");
             FlushMemory();
         }
 
@@ -800,7 +692,7 @@ namespace EVO_CRAFT_LAUNCHER
             if (_isInstallingModpack || _isLaunching) return;
             if (_isMaintenanceSkyblock && !_isOwnerBypassActive)
             {
-                MessageBox.Show(Loc("Secțiunea Skyblock este momentan în MENTENANȚĂ!\nTe rugăm să revii mai târziu.", "Skyblock section is currently under MAINTENANCE!\nPlease come back later."), Loc("Mentenanță", "Maintenance"), MessageBoxButton.OK, MessageBoxImage.Information);
+                MessageBox.Show("Secțiunea Skyblock este momentan în MENTENANȚĂ!\nTe rugăm să revii mai târziu.", "Mentenanță", MessageBoxButton.OK, MessageBoxImage.Information);
                 return;
             }
             SwitchFoldersForMode("Skyblock");
@@ -808,8 +700,24 @@ namespace EVO_CRAFT_LAUNCHER
             officialMods = LoadAndDecryptMods("Skyblock");
             UpdateModeButtonsUI();
             UpdateLaunchButtonState();
-            string displayMode = _selectedGameMode == "Survival" ? "Survival & Creative" : _selectedGameMode;
-            UpdatePresence(Loc("În Launcher", "In Launcher"), Loc($"Pregătire joc ({displayMode})", $"Preparing game ({displayMode})"));
+            UpdatePresence("În Launcher", $"Pregătire joc ({_selectedGameMode})");
+            FlushMemory();
+        }
+
+        private void btnModeCreative_Click(object sender, RoutedEventArgs e)
+        {
+            if (_isInstallingModpack || _isLaunching) return;
+            if (_isMaintenanceCreative && !_isOwnerBypassActive)
+            {
+                MessageBox.Show("Secțiunea Creative este momentan în MENTENANȚĂ!\nTe rugăm să revii mai târziu.", "Mentenanță", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+            SwitchFoldersForMode("Creative");
+            _selectedGameMode = "Creative";
+            officialMods = LoadAndDecryptMods("Creative");
+            UpdateModeButtonsUI();
+            UpdateLaunchButtonState();
+            UpdatePresence("În Launcher", $"Pregătire joc ({_selectedGameMode})");
             FlushMemory();
         }
 
@@ -818,7 +726,7 @@ namespace EVO_CRAFT_LAUNCHER
             if (_isInstallingModpack || _isLaunching) return;
             if (_isMaintenanceParkour && !_isOwnerBypassActive)
             {
-                MessageBox.Show(Loc("Secțiunea Parkour este momentan în MENTENANȚĂ!\nTe rugăm să revii mai târziu.", "Parkour section is currently under MAINTENANCE!\nPlease come back later."), Loc("Mentenanță", "Maintenance"), MessageBoxButton.OK, MessageBoxImage.Information);
+                MessageBox.Show("Secțiunea Parkour este momentan în MENTENANȚĂ!\nTe rugăm să revii mai târziu.", "Mentenanță", MessageBoxButton.OK, MessageBoxImage.Information);
                 return;
             }
             SwitchFoldersForMode("Parkour");
@@ -826,8 +734,7 @@ namespace EVO_CRAFT_LAUNCHER
             officialMods = LoadAndDecryptMods("Parkour");
             UpdateModeButtonsUI();
             UpdateLaunchButtonState();
-            string displayMode = _selectedGameMode == "Survival" ? "Survival & Creative" : _selectedGameMode;
-            UpdatePresence(Loc("În Launcher", "In Launcher"), Loc($"Pregătire joc ({displayMode})", $"Preparing game ({displayMode})"));
+            UpdatePresence("În Launcher", $"Pregătire joc ({_selectedGameMode})");
             FlushMemory();
         }
 
@@ -835,7 +742,7 @@ namespace EVO_CRAFT_LAUNCHER
         {
             if (_isInstallingModpack)
             {
-                Dispatcher.Invoke(() => { btnLaunch.Content = Loc("SE VERIFICĂ FIȘIERELE", "VERIFYING FILES"); btnLaunch.IsEnabled = false; });
+                Dispatcher.Invoke(() => { btnLaunch.Content = "SE VERIFICĂ FIȘIERELE"; btnLaunch.IsEnabled = false; });
                 return;
             }
             if (_isLaunching)
@@ -847,6 +754,7 @@ namespace EVO_CRAFT_LAUNCHER
             string targetOnlineVer = "1.0";
             if (_selectedGameMode == "Survival") targetOnlineVer = OnlineModpackVersionSurvival;
             else if (_selectedGameMode == "Skyblock") targetOnlineVer = OnlineModpackVersionSkyblock;
+            else if (_selectedGameMode == "Creative") targetOnlineVer = OnlineModpackVersionCreative;
             else if (_selectedGameMode == "Parkour") targetOnlineVer = OnlineModpackVersionParkour;
 
             string localVerFile = Path.Combine(_userDataPath, $"modpack_version_{_selectedGameMode.ToLower()}.info");
@@ -854,12 +762,10 @@ namespace EVO_CRAFT_LAUNCHER
             string localVer = File.Exists(localVerFile) ? File.ReadAllText(localVerFile).Trim() : "";
             bool modsExist = Directory.Exists(Path.Combine(_userDataPath, "mods"));
 
-            string displayMode = _selectedGameMode == "Survival" ? "Survival & Creative" : _selectedGameMode;
-
             Dispatcher.Invoke(() => {
                 if (_isBanned)
                 {
-                    btnLaunch.Content = Loc("Acest PC este BANAT", "This PC is BANNED");
+                    btnLaunch.Content = "Acest PC este BANAT";
                     btnLaunch.Background = Brushes.Red;
                     btnLaunch.IsEnabled = false;
                     return;
@@ -868,39 +774,40 @@ namespace EVO_CRAFT_LAUNCHER
                 bool isCurrentModeMaintenance = false;
                 if (_selectedGameMode == "Survival" && _isMaintenanceSurvival) isCurrentModeMaintenance = true;
                 else if (_selectedGameMode == "Skyblock" && _isMaintenanceSkyblock) isCurrentModeMaintenance = true;
+                else if (_selectedGameMode == "Creative" && _isMaintenanceCreative) isCurrentModeMaintenance = true;
                 else if (_selectedGameMode == "Parkour" && _isMaintenanceParkour) isCurrentModeMaintenance = true;
 
                 if (isCurrentModeMaintenance && !_isOwnerBypassActive)
                 {
-                    btnLaunch.Content = Loc($"MENTENANȚĂ ({displayMode})", $"MAINTENANCE ({displayMode})");
+                    btnLaunch.Content = $"MENTENANȚĂ ({_selectedGameMode})";
                     btnLaunch.Background = Brushes.Orange;
                     btnLaunch.IsEnabled = false;
-                    try { if (lblModpackVersion != null) lblModpackVersion.Text = Loc($"MODPACK: OFFLINE ({displayMode})", $"MODPACK: OFFLINE ({displayMode})"); } catch { }
+                    try { if (lblModpackVersion != null) lblModpackVersion.Text = $"MODPACK: OFFLINE ({_selectedGameMode})"; } catch { }
                     return;
                 }
 
                 if (!_isPremiumMode && !_isDatabaseLoggedIn)
                 {
-                    btnLaunch.Content = Loc("LOGIN LAUNCHER", "LOGIN LAUNCHER");
+                    btnLaunch.Content = "LOGIN LAUNCHER";
                     btnLaunch.Background = new SolidColorBrush(Color.FromRgb(114, 137, 218));
                 }
                 else if (!modsExist || string.IsNullOrEmpty(localVer))
                 {
-                    btnLaunch.Content = Loc($"INSTALEAZĂ ({displayMode})", $"INSTALL ({displayMode})");
+                    btnLaunch.Content = $"INSTALEAZĂ ({_selectedGameMode})";
                     btnLaunch.Background = new SolidColorBrush(Color.FromRgb(250, 166, 26));
                 }
                 else if (localVer != targetOnlineVer)
                 {
-                    btnLaunch.Content = Loc($"UPDATE ({displayMode})", $"UPDATE ({displayMode})");
+                    btnLaunch.Content = $"UPDATE ({_selectedGameMode})";
                     btnLaunch.Background = new SolidColorBrush(Color.FromRgb(114, 137, 218));
                 }
                 else
                 {
-                    btnLaunch.Content = Loc($"JOACĂ ({displayMode})", $"PLAY ({displayMode})");
+                    btnLaunch.Content = $"JOACĂ ({_selectedGameMode})";
                     btnLaunch.Background = new SolidColorBrush(Color.FromRgb(67, 181, 129));
                 }
 
-                try { if (lblModpackVersion != null) lblModpackVersion.Text = $"MODPACK: v{targetOnlineVer} ({displayMode})"; } catch { }
+                try { if (lblModpackVersion != null) lblModpackVersion.Text = $"MODPACK: v{targetOnlineVer} ({_selectedGameMode})"; } catch { }
                 btnLaunch.IsEnabled = true;
             });
         }
@@ -922,7 +829,7 @@ namespace EVO_CRAFT_LAUNCHER
                     }
                     else
                     {
-                        lblServerInfo.Text = Loc("SERVER OFFLINE", "SERVER OFFLINE");
+                        lblServerInfo.Text = "SERVER OFFLINE";
                         elServerStatus.Fill = Brushes.Red;
                     }
                 });
@@ -930,7 +837,7 @@ namespace EVO_CRAFT_LAUNCHER
             catch
             {
                 Dispatcher.Invoke(() => {
-                    lblServerInfo.Text = Loc("SERVER OFFLINE", "SERVER OFFLINE");
+                    lblServerInfo.Text = "SERVER OFFLINE";
                     elServerStatus.Fill = Brushes.Red;
                 });
             }
@@ -955,14 +862,11 @@ namespace EVO_CRAFT_LAUNCHER
 
             if (_isRefreshing) return;
             _isRefreshing = true;
-            lblServerInfo.Text = Loc("VERIFICARE...", "VERIFYING...");
+            lblServerInfo.Text = "VERIFICARE...";
             await RefreshServerStatus();
-
-            // ADĂUGAT: Refresh forțat și la Top Playtime când dai click pe rotiță
-            await LoadTopPlayed();
-
             _isRefreshing = false;
         }
+
         private async Task<bool> UpdateHwidInDatabase(string user)
         {
             try
@@ -1017,12 +921,6 @@ namespace EVO_CRAFT_LAUNCHER
                             {
                                 if (root.TryGetProperty("player", out var player))
                                 {
-                                    // EXTRAGEM ID-UL PENTRU REFERRAL LA CRACKED
-                                    if (player.TryGetProperty("id", out var idElement))
-                                    {
-                                        _personalId = idElement.ToString();
-                                    }
-
                                     if (player.TryGetProperty("is_premium", out var isPremEl))
                                     {
                                         bool isPremium = (isPremEl.ValueKind == JsonValueKind.True) ||
@@ -1054,16 +952,6 @@ namespace EVO_CRAFT_LAUNCHER
                                         _totalPlayTime = TimeSpan.FromSeconds(ptElement.GetInt64());
                                         UpdatePlaytimeUI();
                                     }
-
-                                    if (player.TryGetProperty("discord_user", out var duEl))
-                                    {
-                                        _isDiscordLinked = (duEl.ValueKind != JsonValueKind.Null) && !string.IsNullOrWhiteSpace(duEl.GetString());
-                                    }
-                                    else
-                                    {
-                                        _isDiscordLinked = false;
-                                    }
-
                                     return "SUCCESS";
                                 }
                             }
@@ -1088,77 +976,47 @@ namespace EVO_CRAFT_LAUNCHER
                 {
                     string finalUuid = uuid ?? "UNKNOWN_UUID";
 
-                    // 1. INCERCAM SA INREGISTRAM / ACTUALIZAM CONTUL PREMIUM
-                    var regPayload = new { username = username, password = "PREMIUM_ACCOUNT", hwid = GetHWID(), auth_key = ApiAuthKey, is_premium = true, microsoft_id = finalUuid };
-                    var regContent = new StringContent(JsonConvert.SerializeObject(regPayload), Encoding.UTF8, "application/json");
-                    var regResponse = await client.PostAsync($"{VpsApiUrl}/register", regContent);
-
-                    if (regResponse.StatusCode == HttpStatusCode.Forbidden)
+                    var payload = new
                     {
-                        var json = await regResponse.Content.ReadAsStringAsync();
+                        username = username,
+                        password = "PREMIUM_ACCOUNT",
+                        hwid = GetHWID(),
+                        auth_key = ApiAuthKey,
+                        is_premium = true,
+                        microsoft_id = finalUuid
+                    };
+                    var content = new StringContent(JsonConvert.SerializeObject(payload), Encoding.UTF8, "application/json");
+
+                    var response = await client.PostAsync($"{VpsApiUrl}/register", content);
+
+                    if (response.StatusCode == HttpStatusCode.Forbidden)
+                    {
+                        var json = await response.Content.ReadAsStringAsync();
                         if (json.Contains("BANNED_HWID")) return "BANNED";
                     }
 
-                    // 2. FACEM LOGIN MANUAL PENTRU A FI SIGURI CA PRELUAM ID-UL SI DATELE (in caz ca VPS a returnat USER_EXISTS la inregistrare)
-                    var loginPayload = new { user = username, pass = "PREMIUM_ACCOUNT", hwid = GetHWID(), auth_key = ApiAuthKey };
-                    var loginContent = new StringContent(JsonConvert.SerializeObject(loginPayload), Encoding.UTF8, "application/json");
-                    var loginResponse = await client.PostAsync($"{VpsApiUrl}/login", loginContent);
-
-                    if (loginResponse.IsSuccessStatusCode)
+                    if (response.IsSuccessStatusCode)
                     {
-                        string jsonResult = await loginResponse.Content.ReadAsStringAsync();
-                        using (JsonDocument doc = JsonDocument.Parse(jsonResult))
+                        var json = await response.Content.ReadAsStringAsync();
+                        using (JsonDocument doc = JsonDocument.Parse(json))
                         {
-                            var root = doc.RootElement;
-                            var status = root.TryGetProperty("status", out var statusEl) ? statusEl.GetString() : null;
-
-                            if (status == "BANNED") return "BANNED";
-
-                            if (status == "SUCCESS")
+                            if (doc.RootElement.TryGetProperty("player", out var player))
                             {
-                                if (root.TryGetProperty("player", out var player))
+                                if (player.TryGetProperty("has_referral", out var refEl))
                                 {
-                                    // AICI EXTRAGEM ID-UL PENTRU PREMIUM
-                                    if (player.TryGetProperty("id", out var idElement))
-                                    {
-                                        _personalId = idElement.ToString();
-                                    }
-
-                                    if (player.TryGetProperty("has_referral", out var refEl))
-                                    {
-                                        bool hasReferral = refEl.ValueKind == JsonValueKind.True || (refEl.ValueKind == JsonValueKind.Number && refEl.GetInt32() == 1);
-                                        if (!hasReferral) return "NEEDS_REFERRAL";
-                                    }
-
-                                    if (player.TryGetProperty("playtime_seconds", out JsonElement ptElement) && ptElement.ValueKind == JsonValueKind.Number)
-                                    {
-                                        _totalPlayTime = TimeSpan.FromSeconds(ptElement.GetInt64());
-                                        UpdatePlaytimeUI();
-                                    }
-
-                                    if (player.TryGetProperty("discord_user", out var duEl))
-                                    {
-                                        _isDiscordLinked = (duEl.ValueKind != JsonValueKind.Null) && !string.IsNullOrWhiteSpace(duEl.GetString());
-                                    }
-                                    else
-                                    {
-                                        _isDiscordLinked = false;
-                                    }
+                                    bool hasReferral = refEl.ValueKind == JsonValueKind.True || (refEl.ValueKind == JsonValueKind.Number && refEl.GetInt32() == 1);
+                                    if (!hasReferral) return "NEEDS_REFERRAL";
                                 }
-                                await UpdateHwidInDatabase(username);
-                                return "SUCCESS";
                             }
                         }
                     }
-
-                    // In caz ca a picat login-ul (putin probabil), facem fallback
                     await UpdateHwidInDatabase(username);
                     return "SUCCESS";
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show(Loc("Eroare sync Premium DB: ", "Premium DB Sync Error: ") + ex.Message);
+                MessageBox.Show("Eroare sync Premium DB: " + ex.Message);
                 return "ERROR";
             }
         }
@@ -1191,7 +1049,7 @@ namespace EVO_CRAFT_LAUNCHER
             string code = (FindName("txtReferralCode") as TextBox)?.Text.Trim() ?? "";
             if (string.IsNullOrEmpty(code))
             {
-                MessageBox.Show(Loc("Introdu un cod valid sau apasă Sari Peste!", "Enter a valid code or press Skip!"));
+                MessageBox.Show("Introdu un cod valid sau apasă Sari Peste!");
                 return;
             }
 
@@ -1215,7 +1073,7 @@ namespace EVO_CRAFT_LAUNCHER
                             if (status == "VALID")
                             {
                                 string refName = doc.RootElement.GetProperty("username").GetString() ?? "";
-                                var msgResult = MessageBox.Show(Loc($"Jucătorul '{refName}' te-a adus pe server?\n\nDacă da, apasă YES pentru a aplica codul.", $"Did player '{refName}' bring you to the server?\n\nIf yes, press YES to apply code."), Loc("Confirmare Invitație", "Invite Confirmation"), MessageBoxButton.YesNo, MessageBoxImage.Question);
+                                var msgResult = MessageBox.Show($"Jucătorul '{refName}' te-a adus pe server?\n\nDacă da, apasă YES pentru a aplica codul.", "Confirmare Invitație", MessageBoxButton.YesNo, MessageBoxImage.Question);
 
                                 if (msgResult == MessageBoxResult.No)
                                 {
@@ -1225,7 +1083,7 @@ namespace EVO_CRAFT_LAUNCHER
                             }
                             else
                             {
-                                MessageBox.Show(Loc("Acest ID de referral NU EXISTĂ!", "This referral ID DOES NOT EXIST!"), Loc("Eroare", "Error"), MessageBoxButton.OK, MessageBoxImage.Error);
+                                MessageBox.Show("Acest ID de referral NU EXISTĂ!", "Eroare", MessageBoxButton.OK, MessageBoxImage.Error);
                                 if (btn != null) btn.IsEnabled = true;
                                 return;
                             }
@@ -1241,7 +1099,7 @@ namespace EVO_CRAFT_LAUNCHER
 
             if (result == "SUCCESS")
             {
-                MessageBox.Show(Loc("Cod aplicat cu succes! Primești bonusul în joc.", "Code applied successfully! You will receive the in-game bonus."));
+                MessageBox.Show("Cod aplicat cu succes! Primești bonusul în joc.");
                 Dispatcher.Invoke(() => {
                     var pnl = FindName("pnlReferralPrompt") as Grid;
                     if (pnl != null) pnl.Visibility = Visibility.Collapsed;
@@ -1251,15 +1109,15 @@ namespace EVO_CRAFT_LAUNCHER
             }
             else if (result == "INVALID_CODE")
             {
-                MessageBox.Show(Loc("Acest cod de referral nu există!", "This referral code does not exist!"));
+                MessageBox.Show("Acest cod de referral nu există!");
             }
             else if (result == "OWN_CODE")
             {
-                MessageBox.Show(Loc("Nu poți folosi propriul tău cod sau un cod de pe același PC!", "You cannot use your own code or a code from the same PC!"));
+                MessageBox.Show("Nu poți folosi propriul tău cod sau un cod de pe același PC!");
             }
             else
             {
-                MessageBox.Show(Loc("Eroare la serverul API.", "API server error."));
+                MessageBox.Show("Eroare la serverul API.");
             }
         }
 
@@ -1296,57 +1154,9 @@ namespace EVO_CRAFT_LAUNCHER
                 UpdatePremiumUI();
                 await ShowProfile(_premiumSession?.Username);
             }
-
-            Dispatcher.Invoke(() => {
-                var pnlLink = FindName("pnlDiscordLinkSettings") as StackPanel;
-                var pnlLinkedStatus = FindName("pnlDiscordLinkedStatus") as StackPanel;
-                if (pnlLink != null && pnlLinkedStatus != null)
-                {
-                    if (_isDiscordLinked)
-                    {
-                        pnlLink.Visibility = Visibility.Collapsed;
-                        pnlLinkedStatus.Visibility = Visibility.Visible;
-                    }
-                    else
-                    {
-                        pnlLink.Visibility = Visibility.Visible;
-                        pnlLinkedStatus.Visibility = Visibility.Collapsed;
-                    }
-                }
-
-                // ACTUALIZEAZĂ ID-UL PERSONAL ATÂT PENTRU CRACK CÂT ȘI PENTRU PREMIUM
-                var txtId = FindName("txtPersonalId") as TextBox;
-                if (txtId != null) txtId.Text = _personalId;
-            });
-
             await LoadTopPlayed();
             UpdateLaunchButtonState();
         }
-
-        private void BtnSettings_Click(object sender, RoutedEventArgs e)
-        {
-            Dispatcher.Invoke(() => {
-                var pnlLink = FindName("pnlDiscordLinkSettings") as StackPanel;
-                var pnlLinkedStatus = FindName("pnlDiscordLinkedStatus") as StackPanel;
-                if (pnlLink != null && pnlLinkedStatus != null)
-                {
-                    if (_isDiscordLinked)
-                    {
-                        pnlLink.Visibility = Visibility.Collapsed;
-                        pnlLinkedStatus.Visibility = Visibility.Visible;
-                    }
-                    else
-                    {
-                        pnlLink.Visibility = Visibility.Visible;
-                        pnlLinkedStatus.Visibility = Visibility.Collapsed;
-                    }
-                }
-            });
-
-            pnlSettings.Visibility = Visibility.Visible;
-        }
-
-        private void BtnCloseSettings_Click(object sender, RoutedEventArgs e) => pnlSettings.Visibility = Visibility.Collapsed;
 
         private async void btnLaunch_Click(object sender, RoutedEventArgs e)
         {
@@ -1356,7 +1166,7 @@ namespace EVO_CRAFT_LAUNCHER
             if (_isBanned)
             {
                 UpdateLaunchButtonState();
-                MessageBox.Show(Loc("Acest calculator sau cont a fost BANAT!", "This PC or account has been BANNED!"), Loc("INTERZIS", "BANNED"), MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show("Acest calculator sau cont a fost BANAT!", "INTERZIS", MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
             }
 
@@ -1364,10 +1174,10 @@ namespace EVO_CRAFT_LAUNCHER
             {
                 if (string.IsNullOrWhiteSpace(txtUsername.Text) || string.IsNullOrWhiteSpace(txtPassword.Password))
                 {
-                    MessageBox.Show(Loc("Introdu numele și parola!", "Enter username and password!"));
+                    MessageBox.Show("Introdu numele și parola!");
                     return;
                 }
-                lblStatus.Text = Loc("Se verifică contul...", "Verifying account...");
+                lblStatus.Text = "Se verifică contul...";
 
                 string loginResult = await VerifyDatabaseUser(txtUsername.Text, txtPassword.Password);
 
@@ -1375,8 +1185,8 @@ namespace EVO_CRAFT_LAUNCHER
                 {
                     _isBanned = true;
                     UpdateLaunchButtonState();
-                    MessageBox.Show(Loc("Cont BANAT!", "Account BANNED!"), Loc("INTERZIS", "BANNED"));
-                    lblStatus.Text = Loc("Acces respins", "Access denied");
+                    MessageBox.Show("Cont BANAT!", "INTERZIS");
+                    lblStatus.Text = "Acces respins";
                     return;
                 }
                 else if (loginResult == "NEEDS_REFERRAL")
@@ -1396,28 +1206,28 @@ namespace EVO_CRAFT_LAUNCHER
                     _pendingPassword = txtPassword.Password;
                     _pendingIsPremium = false;
                     FinalizeLoginAndSetup();
-                    lblStatus.Text = Loc("Login reușit!", "Login successful!");
+                    lblStatus.Text = "Login reușit!";
                 }
                 else if (loginResult == "PREMIUM_BLOCK")
                 {
-                    MessageBox.Show(Loc("Nume Premium! Loghează-te prin Microsoft.", "Premium Name! Please log in via Microsoft."));
-                    lblStatus.Text = Loc("Cont Premium detectat!", "Premium Account detected!");
+                    MessageBox.Show("Nume Premium! Loghează-te prin Microsoft.");
+                    lblStatus.Text = "Cont Premium detectat!";
                     return;
                 }
                 else if (loginResult == "USER_NOT_FOUND")
                 {
-                    lblStatus.Text = Loc("Nu există contul", "Account does not exist");
+                    lblStatus.Text = "Nu există contul";
                     lblStatus.Foreground = Brushes.Red;
                     return;
                 }
                 else if (loginResult == "HWID_LOCK")
                 {
-                    MessageBox.Show(Loc("Eroare: Cont blocat pe alt PC!", "Error: Account locked to another PC!"), "HWID");
+                    MessageBox.Show("Eroare: Cont blocat pe alt PC!", "HWID");
                     return;
                 }
                 else
                 {
-                    lblStatus.Text = Loc("Eroare DB", "DB Error");
+                    lblStatus.Text = "Eroare DB";
                     return;
                 }
             }
@@ -1454,6 +1264,7 @@ namespace EVO_CRAFT_LAUNCHER
 
             if (_selectedGameMode == "Survival") { targetOnlineVer = OnlineModpackVersionSurvival; targetModsUrl = ModsDownloadUrlSurvival; }
             else if (_selectedGameMode == "Skyblock") { targetOnlineVer = OnlineModpackVersionSkyblock; targetModsUrl = ModsDownloadUrlSkyblock; }
+            else if (_selectedGameMode == "Creative") { targetOnlineVer = OnlineModpackVersionCreative; targetModsUrl = ModsDownloadUrlCreative; }
             else if (_selectedGameMode == "Parkour") { targetOnlineVer = OnlineModpackVersionParkour; targetModsUrl = ModsDownloadUrlParkour; }
 
             string localVerFile = Path.Combine(_userDataPath, $"modpack_version_{_selectedGameMode.ToLower()}.info");
@@ -1463,12 +1274,12 @@ namespace EVO_CRAFT_LAUNCHER
             {
                 if (string.IsNullOrWhiteSpace(targetModsUrl))
                 {
-                    MessageBox.Show(Loc($"Link-ul manifestului JSON pentru {_selectedGameMode} este GOL!\nVerifică API-ul sau version.txt.", $"JSON manifest link for {_selectedGameMode} is EMPTY!\nCheck API or version.txt."), Loc("Eroare Descărcare", "Download Error"), MessageBoxButton.OK, MessageBoxImage.Error);
+                    MessageBox.Show($"Link-ul manifestului JSON pentru {_selectedGameMode} este GOL!\nVerifică API-ul sau version.txt.", "Eroare Descărcare", MessageBoxButton.OK, MessageBoxImage.Error);
                     return false;
                 }
 
                 _isInstallingModpack = true;
-                Dispatcher.Invoke(() => { btnLaunch.Content = Loc("SE VERIFICĂ FIȘIERELE", "VERIFYING FILES"); btnLaunch.IsEnabled = false; lblStatus.Text = Loc("SINCRONIZARE UPDATE...", "SYNCING UPDATE..."); });
+                Dispatcher.Invoke(() => { btnLaunch.Content = "SE VERIFICĂ FIȘIERELE"; btnLaunch.IsEnabled = false; lblStatus.Text = "SINCRONIZARE UPDATE..."; });
                 try
                 {
                     using (HttpClient client = new HttpClient())
@@ -1500,7 +1311,7 @@ namespace EVO_CRAFT_LAUNCHER
 
                                 if (needsDownload)
                                 {
-                                    Dispatcher.Invoke(() => lblProgressDetails.Text = Loc($"Descărcare: {Path.GetFileName(fileInfo.Path)}", $"Downloading: {Path.GetFileName(fileInfo.Path)}"));
+                                    Dispatcher.Invoke(() => lblProgressDetails.Text = $"Descărcare: {Path.GetFileName(fileInfo.Path)}");
 
                                     var fileResp = await client.GetAsync(fileInfo.Url, HttpCompletionOption.ResponseHeadersRead);
                                     using (var fs = new FileStream(localFilePath, FileMode.Create))
@@ -1518,7 +1329,7 @@ namespace EVO_CRAFT_LAUNCHER
                                 completedTasks++;
                                 Dispatcher.Invoke(() => {
                                     pbProgress.Value = ((double)completedTasks / totalTasks) * 100;
-                                    lblStatus.Text = Loc($"VERIFICARE... {completedTasks}/{totalTasks}", $"VERIFYING... {completedTasks}/{totalTasks}");
+                                    lblStatus.Text = $"VERIFICARE... {completedTasks}/{totalTasks}";
                                 });
                             }
 
@@ -1560,7 +1371,7 @@ namespace EVO_CRAFT_LAUNCHER
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show(Loc($"Eroare la descărcarea manifestului {_selectedGameMode}!\nLink accesat: {targetModsUrl}\n\nEroare: {ex.Message}", $"Error downloading manifest for {_selectedGameMode}!\nAccessed link: {targetModsUrl}\n\nError: {ex.Message}"), Loc("Eroare Update", "Update Error"));
+                    MessageBox.Show($"Eroare la descărcarea manifestului {_selectedGameMode}!\nLink accesat: {targetModsUrl}\n\nEroare: {ex.Message}", "Eroare Update");
                     return false;
                 }
                 finally
@@ -1581,7 +1392,7 @@ namespace EVO_CRAFT_LAUNCHER
             if (_isVoiceChatEnabled && !string.IsNullOrEmpty(VoiceChatModUrl))
             {
                 Dispatcher.Invoke(() => {
-                    lblStatus.Text = Loc("DESCĂRCARE VOICE CHAT...", "DOWNLOADING VOICE CHAT...");
+                    lblStatus.Text = "DESCĂRCARE VOICE CHAT...";
                     lblProgressDetails.Text = "Voice Chat Mod";
                 });
                 try
@@ -1603,7 +1414,7 @@ namespace EVO_CRAFT_LAUNCHER
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show(Loc("Eroare la descărcarea modului Voice Chat: ", "Error downloading Voice Chat mod: ") + ex.Message, Loc("Eroare Voice Chat", "Voice Chat Error"), MessageBoxButton.OK, MessageBoxImage.Warning);
+                    MessageBox.Show("Eroare la descărcarea modului Voice Chat: " + ex.Message, "Eroare Voice Chat", MessageBoxButton.OK, MessageBoxImage.Warning);
                 }
             }
             else
@@ -1630,7 +1441,7 @@ namespace EVO_CRAFT_LAUNCHER
             _isLaunching = true;
             Dispatcher.Invoke(() => {
                 btnLaunch.IsEnabled = false;
-                btnLaunch.Content = Loc("SE PREGĂTEȘTE...", "PREPARING...");
+                btnLaunch.Content = "SE PREGĂTEȘTE...";
             });
             EncryptAndSaveFile("jvm_args.dat", txtJvmArgs.Text);
 
@@ -1644,7 +1455,7 @@ namespace EVO_CRAFT_LAUNCHER
                         btnLaunch.IsEnabled = true;
                         UpdateLaunchButtonState();
                         lblStatus.Foreground = Brushes.Gray;
-                        lblStatus.Text = Loc("Pornire anulată (Eroare Modpack)", "Launch cancelled (Modpack Error)");
+                        lblStatus.Text = "Pornire anulată (Eroare Modpack)";
                     });
                     return;
                 }
@@ -1652,7 +1463,7 @@ namespace EVO_CRAFT_LAUNCHER
                 CleanFoldersBeforeStart();
 
                 var launcher = new MinecraftLauncher(new MinecraftPath(_userDataPath));
-                Dispatcher.Invoke(() => { btnLaunch.Content = Loc("PORNEȘTE JOCUL...", "STARTING GAME..."); });
+                Dispatcher.Invoke(() => { btnLaunch.Content = "PORNEȘTE JOCUL..."; });
 
                 await launcher.InstallAsync("1.20.1", new Progress<InstallerProgressChangedEventArgs>(ev => {
                     Dispatcher.Invoke(() => {
@@ -1731,8 +1542,7 @@ namespace EVO_CRAFT_LAUNCHER
                 });
                 FlushMemory(); // Aruncam gunoiul
 
-                string displayMode = _selectedGameMode == "Survival" ? "Survival & Creative" : _selectedGameMode;
-                UpdatePresence(Loc($"În Joc - {displayMode}", $"In Game - {displayMode}"), Loc($"Jucător: {_session.Username}", $"Player: {_session.Username}"));
+                UpdatePresence($"În Joc - {_selectedGameMode}", $"Jucător: {_session.Username}");
 
                 var playStart = DateTime.UtcNow;
                 process.StartInfo.UseShellExecute = false;
@@ -1797,7 +1607,7 @@ namespace EVO_CRAFT_LAUNCHER
                     Dispatcher.Invoke(() => {
                         try { bgVideo.Source = new Uri("background.mp4", UriKind.RelativeOrAbsolute); bgVideo.Play(); } catch { }
                         this.Show();
-                        MessageBox.Show(Loc("Cheat detectat!\nMotiv: Tentativă de injectare în memoria Java blocată (JNI / Manual Mapping).\n\nJocul a fost închis forțat de sistemul de securitate.", "Cheat detected!\nReason: Blocked Java memory injection attempt (JNI / Manual Mapping).\n\nThe game was forcefully closed by the security system."), "SECURITATE EVO CRAFT", MessageBoxButton.OK, MessageBoxImage.Error);
+                        MessageBox.Show("Cheat detectat!\nMotiv: Tentativă de injectare în memoria Java blocată (JNI / Manual Mapping).\n\nJocul a fost închis forțat de sistemul de securitate.", "SECURITATE EVO CRAFT", MessageBoxButton.OK, MessageBoxImage.Error);
                     });
 
                     _isLaunching = false;
@@ -1827,12 +1637,12 @@ namespace EVO_CRAFT_LAUNCHER
                     Dispatcher.Invoke(() => {
                         try { bgVideo.Source = new Uri("background.mp4", UriKind.RelativeOrAbsolute); bgVideo.Play(); } catch { }
                         this.Show();
-                        MessageBox.Show(Loc($"JOCUL A CRĂPAT SAU S-A ÎNCHIS ANORMAL!\n\nPosibile motive:\n1. Alocare RAM greșită (pune -Xmx4G).\n2. Un mod a întâmpinat o eroare internă.\n\nDetalii (Ultimele rânduri):\nExit Code: {exitCode}\n{shortError}", $"GAME CRASHED OR CLOSED ABNORMALLY!\n\nPossible reasons:\n1. Wrong RAM allocation (use -Xmx4G).\n2. A mod encountered an internal error.\n\nDetails (Last lines):\nExit Code: {exitCode}\n{shortError}"), "CRASH");
+                        MessageBox.Show($"JOCUL A CRĂPAT SAU S-A ÎNCHIS ANORMAL!\n\nPosibile motive:\n1. Alocare RAM greșită (pune -Xmx4G).\n2. Un mod a întâmpinat o eroare internă.\n\nDetalii (Ultimele rânduri):\nExit Code: {exitCode}\n{shortError}", "CRASH");
                     });
                 }
                 else
                 {
-                    UpdatePresence(Loc("În Launcher", "In Launcher"), Loc($"Pregătire joc ({displayMode})", $"Preparing game ({displayMode})"));
+                    UpdatePresence("În Launcher", $"Pregătire joc ({_selectedGameMode})");
                     _totalPlayTime = _totalPlayTime.Add(sessionTime);
                     UpdatePlaytimeUI();
                     await SyncPlaytimeToDatabase();
@@ -1846,19 +1656,10 @@ namespace EVO_CRAFT_LAUNCHER
             }
             catch (Exception ex)
             {
-                try { File.WriteAllText(Path.Combine(_userDataPath, "launcher_crash.txt"), ex.ToString()); } catch { }
-
                 Dispatcher.Invoke(() => {
                     try { bgVideo.Source = new Uri("background.mp4", UriKind.RelativeOrAbsolute); bgVideo.Play(); } catch { }
                     this.Show();
-
-                    string extraHint = "";
-                    if (ex.Message.Contains("404"))
-                    {
-                        extraHint = Loc("\n\n[INFO] Eroare 404 la descărcarea fișierelor (Forge/Java) de la Mojang.\n\nCAUZE POSIBILE:\n1. Cache corupt. Te rugăm să intri la Setări -> 'ȘTERGE DATE JOC' și să reîncerci.\n2. Ai Windows pe 32-biți (x86), iar versiunea curentă necesită 64-biți.\n\nTrimite fișierul 'launcher_crash.txt' din folderul .evocraft administratorului pentru detalii exacte!", "\n\n[INFO] 404 Error downloading files (Forge/Java) from Mojang.\n\nPOSSIBLE CAUSES:\n1. Corrupted cache. Please go to Settings -> 'DELETE GAME DATA' and try again.\n2. You are using 32-bit (x86) Windows, and the current version requires 64-bit.\n\nSend 'launcher_crash.txt' from .evocraft folder to an administrator for exact details!");
-                    }
-
-                    MessageBox.Show(Loc("Eroare la pornire: ", "Launch error: ") + ex.Message + extraHint, Loc("Eroare Lansare Joc", "Game Launch Error"), MessageBoxButton.OK, MessageBoxImage.Error);
+                    MessageBox.Show("Eroare la pornire: " + ex.Message);
                 });
             }
             finally
@@ -1877,12 +1678,12 @@ namespace EVO_CRAFT_LAUNCHER
         {
             if (string.IsNullOrWhiteSpace(regUsername.Text) || string.IsNullOrWhiteSpace(regPassword.Password))
             {
-                lblRegStatus.Text = Loc("Completează datele!", "Fill in the details!");
+                lblRegStatus.Text = "Completează datele!";
                 return;
             }
 
             btnConfirmRegister.IsEnabled = false;
-            lblRegStatus.Text = Loc("Se verifică...", "Verifying...");
+            lblRegStatus.Text = "Se verifică...";
 
             try
             {
@@ -1905,19 +1706,19 @@ namespace EVO_CRAFT_LAUNCHER
                                 if (status == "VALID")
                                 {
                                     string refName = doc.RootElement.GetProperty("username").GetString() ?? "";
-                                    var msgResult = MessageBox.Show(Loc($"Jucătorul '{refName}' te-a adus pe server?\n\nDacă da, apasă YES pentru a crea contul.", $"Did player '{refName}' bring you to the server?\n\nIf yes, press YES to create account."), Loc("Confirmare Invitație", "Invite Confirmation"), MessageBoxButton.YesNo, MessageBoxImage.Question);
+                                    var msgResult = MessageBox.Show($"Jucătorul '{refName}' te-a adus pe server?\n\nDacă da, apasă YES pentru a crea contul.", "Confirmare Invitație", MessageBoxButton.YesNo, MessageBoxImage.Question);
 
                                     if (msgResult == MessageBoxResult.No)
                                     {
-                                        lblRegStatus.Text = Loc("Înregistrare anulată.", "Registration cancelled.");
+                                        lblRegStatus.Text = "Înregistrare anulată.";
                                         btnConfirmRegister.IsEnabled = true;
                                         return;
                                     }
                                 }
                                 else
                                 {
-                                    MessageBox.Show(Loc("Acest ID de referral NU EXISTĂ!", "This referral ID DOES NOT EXIST!"), Loc("Eroare", "Error"), MessageBoxButton.OK, MessageBoxImage.Error);
-                                    lblRegStatus.Text = Loc("Cod invalid!", "Invalid code!");
+                                    MessageBox.Show("Acest ID de referral NU EXISTĂ!", "Eroare", MessageBoxButton.OK, MessageBoxImage.Error);
+                                    lblRegStatus.Text = "Cod invalid!";
                                     btnConfirmRegister.IsEnabled = true;
                                     return;
                                 }
@@ -1929,6 +1730,7 @@ namespace EVO_CRAFT_LAUNCHER
                     {
                         username = regUsername.Text,
                         password = regPassword.Password,
+                        discord_user = string.IsNullOrWhiteSpace(regDiscord.Text) ? null : regDiscord.Text,
                         hwid = GetHWID(),
                         auth_key = ApiAuthKey,
                         referral_code = string.IsNullOrWhiteSpace(referral) ? null : referral
@@ -1946,42 +1748,42 @@ namespace EVO_CRAFT_LAUNCHER
 
                             if (status == "SUCCESS")
                             {
-                                MessageBox.Show(Loc("Cont creat cu succes! Te poți loga acum.", "Account successfully created! You can now log in."));
+                                MessageBox.Show("Cont creat cu succes! Te poți loga acum.");
                                 pnlRegister.Visibility = Visibility.Collapsed;
                                 txtUsername.Text = regUsername.Text;
                             }
                             else if (status == "BANNED_HWID")
                             {
-                                MessageBox.Show(Loc("Acest calculator este BANAT pe un alt cont!\nNu poți crea conturi noi.", "This PC is BANNED on another account!\nYou cannot create new accounts."), Loc("INTERZIS", "BANNED"), MessageBoxButton.OK, MessageBoxImage.Error);
-                                lblRegStatus.Text = Loc("Calculator Banat!", "Banned PC!");
+                                MessageBox.Show("Acest calculator este BANAT pe un alt cont!\nNu poți crea conturi noi.", "INTERZIS", MessageBoxButton.OK, MessageBoxImage.Error);
+                                lblRegStatus.Text = "Calculator Banat!";
                             }
                             else if (status == "USER_EXISTS")
                             {
-                                lblRegStatus.Text = Loc("Acest nume este deja folosit!", "This name is already used!");
+                                lblRegStatus.Text = "Acest nume este deja folosit!";
                             }
                             else if (status == "INVALID_REFERRAL")
                             {
-                                MessageBox.Show(Loc("Acest cod de referral nu există!", "This referral code does not exist!"), Loc("Eroare", "Error"), MessageBoxButton.OK, MessageBoxImage.Error);
-                                lblRegStatus.Text = Loc("Cod referral invalid!", "Invalid referral code!");
+                                MessageBox.Show("Acest cod de referral nu există!", "Eroare", MessageBoxButton.OK, MessageBoxImage.Error);
+                                lblRegStatus.Text = "Cod referral invalid!";
                             }
                             else if (status == "OWN_CODE")
                             {
-                                MessageBox.Show(Loc("Nu poți folosi propriul tău cod sau un cod de pe același PC!", "You cannot use your own code or a code from the same PC!"), Loc("Eroare", "Error"), MessageBoxButton.OK, MessageBoxImage.Error);
-                                lblRegStatus.Text = Loc("Cod referral invalid!", "Invalid referral code!");
+                                MessageBox.Show("Nu poți folosi propriul tău cod sau un cod de pe același PC!", "Eroare", MessageBoxButton.OK, MessageBoxImage.Error);
+                                lblRegStatus.Text = "Cod referral invalid!";
                             }
                         }
                     }
                     else if (response.StatusCode == HttpStatusCode.Forbidden)
                     {
-                        MessageBox.Show(Loc("Acces interzis (HWID Banned)!", "Access denied (HWID Banned)!"), Loc("INTERZIS", "BANNED"), MessageBoxButton.OK, MessageBoxImage.Error);
+                        MessageBox.Show("Acces interzis (HWID Banned)!", "INTERZIS", MessageBoxButton.OK, MessageBoxImage.Error);
                     }
                     else
                     {
-                        lblRegStatus.Text = Loc("Eroare (VPS Offline sau problemă DB)!", "Error (VPS Offline or DB problem)!");
+                        lblRegStatus.Text = "Eroare (VPS Offline sau problemă DB)!";
                     }
                 }
             }
-            catch { lblRegStatus.Text = Loc("Eroare conexiune!", "Connection error!"); }
+            catch { lblRegStatus.Text = "Eroare conexiune!"; }
             finally { btnConfirmRegister.IsEnabled = true; }
         }
 
@@ -2163,10 +1965,10 @@ namespace EVO_CRAFT_LAUNCHER
                 SaveBypassEncrypted(false);
                 txtBypassPass.Password = "";
                 txtSplashBypassPass.Password = "";
-                btnOwnerBypass.Content = Loc("DEBLOCHEAZĂ", "UNLOCK");
+                btnOwnerBypass.Content = "DEBLOCHEAZĂ";
                 btnOwnerBypass.Background = new SolidColorBrush(Color.FromRgb(51, 51, 51));
                 btnOwnerBypass.Foreground = Brushes.White;
-                MessageBox.Show(Loc("Bypass DEZACTIVAT.", "Bypass DEACTIVATED."), "EVO-CRAFT");
+                MessageBox.Show("Bypass DEZACTIVAT.", "EVO-CRAFT");
                 return;
             }
 
@@ -2174,10 +1976,10 @@ namespace EVO_CRAFT_LAUNCHER
             {
                 _isOwnerBypassActive = true;
                 SaveBypassEncrypted(true);
-                MessageBox.Show(Loc("MOD OWNER ACTIVAT! Poți intra chiar dacă e mentenanță.", "OWNER MODE ACTIVATED! You can join even if in maintenance."), "EVO-CRAFT BYPASS");
+                MessageBox.Show("MOD OWNER ACTIVAT! Poți intra chiar dacă e mentenanță.", "EVO-CRAFT BYPASS");
 
                 btnOwnerBypass.Background = Brushes.Gold;
-                btnOwnerBypass.Content = Loc("ACTIV (Apasă STOP)", "ACTIVE (Press STOP)");
+                btnOwnerBypass.Content = "ACTIV (Apasă STOP)";
                 btnOwnerBypass.Foreground = Brushes.Black;
 
                 if (SplashScreen.Visibility == Visibility.Visible)
@@ -2191,7 +1993,7 @@ namespace EVO_CRAFT_LAUNCHER
             }
             else
             {
-                MessageBox.Show(Loc("Parolă incorectă!", "Incorrect password!"), Loc("EROARE", "ERROR"));
+                MessageBox.Show("Parolă incorectă!", "EROARE");
             }
         }
 
@@ -2206,7 +2008,7 @@ namespace EVO_CRAFT_LAUNCHER
                 {
                     if (!officialMods.Contains(Path.GetFileName(mod)) && Path.GetFileName(mod) != VoiceChatModFileName)
                     {
-                        try { File.Delete(mod); MessageBox.Show(Loc($"Vezi că ai băgat un mod diferit ({Path.GetFileName(mod)})! Nu este permis!", $"Notice: You added a different mod ({Path.GetFileName(mod)})! This is not allowed!"), "SECURITATE"); } catch { }
+                        try { File.Delete(mod); MessageBox.Show($"Vezi că ai băgat un mod diferit ({Path.GetFileName(mod)})! Nu este permis!", "SECURITATE"); } catch { }
                     }
                 }
             }
@@ -2217,9 +2019,9 @@ namespace EVO_CRAFT_LAUNCHER
                 string path = Path.Combine(_userDataPath, folder);
                 if (!Directory.Exists(path)) continue;
                 foreach (var f in Directory.GetFiles(path))
-                    if (f.ToLower().Contains("xray")) try { File.Delete(f); MessageBox.Show(Loc($"XRAY detectat în {folder} și șters!", $"XRAY detected in {folder} and deleted!"), "SECURITATE"); } catch { }
+                    if (f.ToLower().Contains("xray")) try { File.Delete(f); MessageBox.Show($"XRAY detectat în {folder} și șters!", "SECURITATE"); } catch { }
                 foreach (var d in Directory.GetDirectories(path))
-                    if (d.ToLower().Contains("xray")) try { Directory.Delete(d, true); MessageBox.Show(Loc($"Folder XRAY detectat în {folder} și șters!", $"XRAY folder detected in {folder} and deleted!"), "SECURITATE"); } catch { }
+                    if (d.ToLower().Contains("xray")) try { Directory.Delete(d, true); MessageBox.Show($"Folder XRAY detectat în {folder} și șters!", "SECURITATE"); } catch { }
             }
         }
 
@@ -2230,7 +2032,7 @@ namespace EVO_CRAFT_LAUNCHER
                 {
                     pnlUsernameInput.Visibility = Visibility.Collapsed;
                     pnlDbLoggedInMsg.Visibility = Visibility.Visible;
-                    lblDbLoggedUser.Text = Loc($"Ești logat ca: {txtUsername.Text}", $"Logged in as: {txtUsername.Text}");
+                    lblDbLoggedUser.Text = $"Ești logat ca: {txtUsername.Text}";
                 }
                 else
                 {
@@ -2245,21 +2047,21 @@ namespace EVO_CRAFT_LAUNCHER
         {
             if (_session == null)
             {
-                MessageBox.Show(Loc("Trebuie să fii logat în launcher pentru a genera un cod de login browser!", "You must be logged into the launcher to generate a browser login code!"), "SISTEM");
+                MessageBox.Show("Trebuie să fii logat în launcher pentru a genera un cod de login browser!", "SISTEM");
                 return;
             }
 
             if (txtWebToken.Text != "********")
             {
                 txtWebToken.Text = "********";
-                if (FindName("btnShowWebToken") is Button btn) btn.Content = Loc("AFIȘEAZĂ COD", "SHOW CODE");
+                btnShowWebToken.Content = "AFIȘEAZĂ COD";
                 return;
             }
 
             try
             {
                 btnShowWebToken.IsEnabled = false;
-                if (FindName("btnShowWebToken") is Button btnWait) btnWait.Content = Loc("GENERARE...", "GENERATING...");
+                btnShowWebToken.Content = "GENERARE...";
 
                 using (HttpClient client = new HttpClient())
                 {
@@ -2276,20 +2078,20 @@ namespace EVO_CRAFT_LAUNCHER
                         {
                             _currentWebToken = tokenVal;
                             txtWebToken.Text = _currentWebToken;
-                            if (FindName("btnShowWebToken") is Button btnSuccess) btnSuccess.Content = Loc("ASCUNDE COD", "HIDE CODE");
+                            btnShowWebToken.Content = "ASCUNDE COD";
                         }
                     }
                     else
                     {
-                        MessageBox.Show(Loc("Eroare VPS: Nu s-a putut genera token-ul.", "VPS Error: Could not generate token."));
+                        MessageBox.Show("Eroare VPS: Nu s-a putut genera token-ul.");
                         txtWebToken.Text = "********";
-                        if (FindName("btnShowWebToken") is Button btnFail) btnFail.Content = Loc("AFIȘEAZĂ COD", "SHOW CODE");
+                        btnShowWebToken.Content = "AFIȘEAZĂ COD";
                     }
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show(Loc("Eroare conexiune: ", "Connection error: ") + ex.Message);
+                MessageBox.Show("Eroare conexiune: " + ex.Message);
             }
             finally
             {
@@ -2301,7 +2103,7 @@ namespace EVO_CRAFT_LAUNCHER
         {
             if (string.IsNullOrEmpty(_currentWebToken) || txtWebToken.Text == "********")
             {
-                MessageBox.Show(Loc("Generează întâi un cod prin butonul de mai sus!", "Generate a code first using the button above!"), "INFO");
+                MessageBox.Show("Generează întâi un cod prin butonul de mai sus!", "INFO");
                 return;
             }
 
@@ -2311,78 +2113,6 @@ namespace EVO_CRAFT_LAUNCHER
                 Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
             }
             catch { }
-        }
-
-        // =========================================================================
-        // NOUA FUNCTIE PENTRU A GENERA CODUL DE LINK DISCORD
-        // =========================================================================
-        private async void btnGenerateLinkCode_Click(object sender, RoutedEventArgs e)
-        {
-            if (_session == null || string.IsNullOrEmpty(_session.Username))
-            {
-                MessageBox.Show(Loc("Trebuie să fii logat în joc pentru a-ți asocia contul!", "You must be logged into the game to link your account!"), Loc("EROARE", "ERROR"));
-                return;
-            }
-
-            var btn = sender as System.Windows.Controls.Button;
-            if (btn != null)
-            {
-                btn.IsEnabled = false;
-                btn.Content = Loc("SE GENEREAZĂ...", "GENERATING...");
-            }
-
-            try
-            {
-                using (HttpClient client = new HttpClient())
-                {
-                    var payload = new { username = _session.Username, auth_key = ApiAuthKey };
-                    var content = new StringContent(JsonConvert.SerializeObject(payload), Encoding.UTF8, "application/json");
-
-                    var response = await client.PostAsync($"{VpsApiUrl}/generate-discord-link", content);
-
-                    if (response.IsSuccessStatusCode)
-                    {
-                        var jsonResponse = await response.Content.ReadAsStringAsync();
-                        var jobj = JsonConvert.DeserializeObject<Newtonsoft.Json.Linq.JObject>(jsonResponse);
-                        var codeVal = jobj?.Value<string?>("code");
-
-                        if (!string.IsNullOrEmpty(codeVal))
-                        {
-                            _currentDiscordLinkCode = codeVal;
-
-                            Dispatcher.Invoke(() => {
-                                var txtLinkCodeBox = FindName("txtDiscordLinkCode") as TextBox;
-                                if (txtLinkCodeBox != null)
-                                {
-                                    txtLinkCodeBox.Text = _currentDiscordLinkCode;
-                                }
-                            });
-
-                            MessageBox.Show(Loc($"Cod generat cu succes!\n\nFolosește comanda:\n/link {_currentDiscordLinkCode}\n\n...pe serverul de Discord EvoCraft.", $"Code successfully generated!\n\nUse command:\n/link {_currentDiscordLinkCode}\n\n...on the EvoCraft Discord server."), Loc("SUCCES LINK ACCOUNT", "SUCCESS LINK ACCOUNT"));
-                        }
-                        else
-                        {
-                            MessageBox.Show(Loc("Răspuns invalid de la server.", "Invalid server response."));
-                        }
-                    }
-                    else
-                    {
-                        MessageBox.Show(Loc("A apărut o eroare la conexiunea cu serverul VPS.", "An error occurred connecting to the VPS server."));
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show(Loc("Nu am putut genera codul. Ești conectat la internet?\nEroare: ", "Could not generate code. Are you connected to the internet?\nError: ") + ex.Message);
-            }
-            finally
-            {
-                if (btn != null)
-                {
-                    btn.Content = Loc("GENEREAZĂ COD LINK", "GENERATE LINK CODE");
-                    btn.IsEnabled = true;
-                }
-            }
         }
 
         private async Task PerformMicrosoftLogin(bool silent = false)
@@ -2399,7 +2129,7 @@ namespace EVO_CRAFT_LAUNCHER
                     if (syncResult == "BANNED")
                     {
                         UpdateLaunchButtonState();
-                        MessageBox.Show(Loc("Acest calculator sau cont a fost BANAT permanent de pe EVO CRAFT!", "This PC or account has been permanently BANNED from EVO CRAFT!"), Loc("INTERZIS", "BANNED"), MessageBoxButton.OK, MessageBoxImage.Error);
+                        MessageBox.Show("Acest calculator sau cont a fost BANAT permanent de pe EVO CRAFT!", "INTERZIS", MessageBoxButton.OK, MessageBoxImage.Error);
                         UpdateCrackedUI();
                         return;
                     }
@@ -2434,7 +2164,7 @@ namespace EVO_CRAFT_LAUNCHER
             btnTabPremium.Background = Brushes.Transparent;
             UpdateDatabaseUI(false);
             pnlPremiumMsg.Visibility = Visibility.Collapsed;
-            lblAccountType.Text = Loc("Cont Launcher", "Launcher Account");
+            lblAccountType.Text = "Cont Launcher";
             SaveLoginMode("cracked");
         }
 
@@ -2446,7 +2176,7 @@ namespace EVO_CRAFT_LAUNCHER
             pnlUsernameInput.Visibility = Visibility.Collapsed;
             pnlDbLoggedInMsg.Visibility = Visibility.Collapsed;
             pnlPremiumMsg.Visibility = Visibility.Visible;
-            lblAccountType.Text = Loc("Cont Premium", "Premium Account");
+            lblAccountType.Text = "Cont Premium";
             SaveLoginMode("premium");
         }
 
@@ -2505,10 +2235,10 @@ namespace EVO_CRAFT_LAUNCHER
                         string ver = "1.0";
                         if (_selectedGameMode == "Survival") ver = OnlineModpackVersionSurvival;
                         else if (_selectedGameMode == "Skyblock") ver = OnlineModpackVersionSkyblock;
+                        else if (_selectedGameMode == "Creative") ver = OnlineModpackVersionCreative;
                         else if (_selectedGameMode == "Parkour") ver = OnlineModpackVersionParkour;
 
-                        string displayMode = _selectedGameMode == "Survival" ? "Survival & Creative" : _selectedGameMode;
-                        lblModpackVersion.Text = $"MODPACK: v{ver} ({displayMode})";
+                        lblModpackVersion.Text = $"MODPACK: v{ver} ({_selectedGameMode})";
                     }
                 });
             }
@@ -2517,7 +2247,7 @@ namespace EVO_CRAFT_LAUNCHER
 
         private void btnLogout_Click(object sender, RoutedEventArgs e)
         {
-            if (MessageBox.Show(Loc("Deconectare?", "Log Out?"), Loc("Log Out", "Log Out"), MessageBoxButton.YesNo) == MessageBoxResult.Yes)
+            if (MessageBox.Show("Deconectare?", "Log Out", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
             {
                 _premiumSession = null;
                 _session = null;
@@ -2527,19 +2257,13 @@ namespace EVO_CRAFT_LAUNCHER
                 UpdateCrackedUI(); _ = ShowProfile("MHF_Steve"); UpdateLaunchButtonState();
                 _totalPlayTime = TimeSpan.Zero;
                 UpdatePlaytimeUI();
-
-                // RESETEAZĂ ID-UL
-                _personalId = "-";
-                var txtId = FindName("txtPersonalId") as TextBox;
-                if (txtId != null) txtId.Text = _personalId;
-
                 FlushMemory();
             }
         }
 
         private void btnDeleteData_Click(object sender, RoutedEventArgs e)
         {
-            if (MessageBox.Show(Loc("Ștergi modpack-ul?", "Delete modpack?"), Loc("Resetare", "Reset"), MessageBoxButton.YesNo) == MessageBoxResult.Yes)
+            if (MessageBox.Show("Ștergi modpack-ul?", "Resetare", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
             {
                 try
                 {
@@ -2557,30 +2281,7 @@ namespace EVO_CRAFT_LAUNCHER
         private void Window_MouseDown(object sender, MouseButtonEventArgs e) { if (e.LeftButton == MouseButtonState.Pressed) DragMove(); }
         private void btnMinimize_Click(object sender, RoutedEventArgs e) => WindowState = WindowState.Minimized;
         private void btnClose_Click(object sender, RoutedEventArgs e) => Application.Current.Shutdown();
-
-        private void btnSettings_Click(object sender, RoutedEventArgs e)
-        {
-            Dispatcher.Invoke(() => {
-                var pnlLink = FindName("pnlDiscordLinkSettings") as StackPanel;
-                var pnlLinkedStatus = FindName("pnlDiscordLinkedStatus") as StackPanel;
-                if (pnlLink != null && pnlLinkedStatus != null)
-                {
-                    if (_isDiscordLinked)
-                    {
-                        pnlLink.Visibility = Visibility.Collapsed;
-                        pnlLinkedStatus.Visibility = Visibility.Visible;
-                    }
-                    else
-                    {
-                        pnlLink.Visibility = Visibility.Visible;
-                        pnlLinkedStatus.Visibility = Visibility.Collapsed;
-                    }
-                }
-            });
-
-            pnlSettings.Visibility = Visibility.Visible;
-        }
-
+        private void btnSettings_Click(object sender, RoutedEventArgs e) => pnlSettings.Visibility = Visibility.Visible;
         private void btnCloseSettings_Click(object sender, RoutedEventArgs e) => pnlSettings.Visibility = Visibility.Collapsed;
         private void bgVideo_Loaded(object sender, RoutedEventArgs e) => bgVideo.Play();
         private void bgVideo_MediaEnded(object sender, RoutedEventArgs e) { bgVideo.Position = TimeSpan.FromMilliseconds(1); bgVideo.Play(); }
@@ -2598,7 +2299,7 @@ namespace EVO_CRAFT_LAUNCHER
                         lblPlayTime.Visibility = Visibility.Visible;
                         int totalHours = (int)_totalPlayTime.TotalHours;
                         int minutes = _totalPlayTime.Minutes;
-                        lblPlayTime.Text = Loc($"ORE JUCATE: {totalHours}h {minutes}m", $"PLAYTIME: {totalHours}h {minutes}m");
+                        lblPlayTime.Text = $"ORE JUCATE: {totalHours}h {minutes}m";
                     }
                 });
             }
